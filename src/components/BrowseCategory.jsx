@@ -148,10 +148,10 @@ export default function BrowseCategory() {
       {/* Header Row: Title & Subtitle on left, 'Browse all >' on right */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-5 mb-8 sm:mb-12">
         <div className="max-w-2xl">
-          <h2 className="text-2xl sm:text-4xl lg:text-[44px] font-black text-slate-950 tracking-tight leading-tight">
+          <h2 className="text-2xl sm:text-4xl lg:text-[44px] font-black text-main-text tracking-tight leading-tight">
             Browse by category
           </h2>
-          <p className="mt-2 sm:mt-3 text-sm sm:text-base lg:text-[17px] text-slate-800 leading-relaxed max-w-xl font-semibold">
+          <p className="mt-2 sm:mt-3 text-sm sm:text-base lg:text-[17px] text-muted-text leading-relaxed max-w-xl font-medium">
             Find verified jobs for skilled technicians, tradesmen, and industrial specialists across India. Verified recruiters and transparent salaries.
           </p>
         </div>
@@ -159,10 +159,10 @@ export default function BrowseCategory() {
         {/* 'Browse all >' pill button */}
         <a
           href="#categories"
-          className="inline-flex items-center gap-1.5 px-5 sm:px-6 py-2 sm:py-2.5 rounded-full border border-slate-300 bg-white hover:border-slate-400 hover:bg-slate-50 text-slate-950 text-xs sm:text-sm font-extrabold transition-all duration-200 self-start md:self-auto shadow-sm active:scale-95"
+          className="inline-flex items-center gap-1.5 px-5 sm:px-6 py-2 sm:py-2.5 rounded-full border border-card-border bg-white hover:border-[#D1D5DB] hover:bg-secondary-bg text-main-text hover:text-accent text-xs sm:text-sm font-bold transition-all duration-200 self-start md:self-auto shadow-xs active:scale-95"
         >
           <span>Browse all</span>
-          <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-900 stroke-[2.5]" />
+          <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-main-text stroke-[2.5]" />
         </a>
       </div>
 
@@ -174,23 +174,23 @@ export default function BrowseCategory() {
             <div
               key={category.id}
               onClick={() => setSelectedId(category.id)}
-              className={`relative bg-white rounded-2xl min-h-[220px] sm:min-h-[290px] py-6 sm:py-11 px-3 sm:px-6 flex flex-col items-center justify-between text-center transition-all duration-250 cursor-pointer group ${
+              className={`relative bg-white rounded-2xl min-h-[220px] sm:min-h-[290px] py-6 sm:py-11 px-3 sm:px-6 flex flex-col items-center justify-between text-center transition-all duration-200 cursor-pointer group ${
                 isSelected
-                  ? 'border-2 border-[#8B6CEF] shadow-[0_18px_40px_-12px_rgba(139,108,239,0.22)] -translate-y-1'
-                  : 'border border-slate-200 hover:border-slate-300 shadow-xs hover:shadow-md hover:-translate-y-1'
+                  ? 'border-2 border-primary shadow-sm -translate-y-0.5'
+                  : 'border border-card-border hover:border-accent/50 shadow-xs hover:shadow-sm hover:-translate-y-0.5'
               }`}
             >
               {/* Illustration Icon */}
-              <div className="transition-transform duration-200 group-hover:scale-110 select-none mb-2 sm:mb-4 scale-85 sm:scale-100">
+              <div className="transition-transform duration-200 group-hover:scale-105 select-none mb-2 sm:mb-4 scale-85 sm:scale-100">
                 {category.icon}
               </div>
 
               {/* Title & Vacancies */}
               <div className="space-y-1.5 sm:space-y-2.5">
-                <h3 className="text-sm sm:text-[19px] font-black text-slate-950 tracking-tight leading-snug whitespace-pre-line group-hover:text-[#7B61FF] transition-colors">
+                <h3 className="text-sm sm:text-[19px] font-bold text-main-text tracking-tight leading-snug whitespace-pre-line group-hover:text-accent transition-colors">
                   {category.title}
                 </h3>
-                <span className="inline-block px-2 sm:px-3.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[13px] font-extrabold text-purple-900 bg-purple-100 border border-purple-200">
+                <span className="inline-block px-2 sm:px-3.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[13px] font-bold text-accent bg-accent-light border border-accent-border">
                   {category.vacancies}
                 </span>
               </div>
@@ -205,7 +205,7 @@ export default function BrowseCategory() {
           type="button"
           onClick={scrollToTop}
           aria-label="Scroll to top"
-          className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#8B6CEF] hover:bg-[#7B59EC] text-white flex items-center justify-center shadow-lg transition-all duration-200 hover:-translate-y-0.5 active:scale-95 cursor-pointer"
+          className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-primary hover:bg-primary-hover text-white flex items-center justify-center shadow-md transition-all duration-200 hover:-translate-y-0.5 active:scale-95 cursor-pointer"
         >
           <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
         </button>

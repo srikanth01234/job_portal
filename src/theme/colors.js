@@ -1,56 +1,50 @@
 /**
- * Jobhub Design System - Color Palette & Theme Tokens
- * Centralized theme colors for reusability across components
+ * Stark Jobs Design System - Connected to src/index.css
+ * To change colors, simply edit src/index.css -- all values update automatically!
  */
 
 export const colors = {
-  // Brand Colors
+  // Primary: Deep Navy
   primary: {
-    DEFAULT: '#7B61FF', // Signature Jobhub purple for CTA buttons & active states
-    hover: '#6A4EF5',
-    light: '#F3F0FF',
-    soft: 'rgba(123, 97, 255, 0.1)',
+    DEFAULT: 'var(--color-primary)',
+    hover: 'var(--color-primary-hover)',
+    light: 'var(--color-primary-light)',
+    soft: 'rgba(23, 62, 104, 0.08)',
   },
   
-  brandBlue: {
-    DEFAULT: '#2563EB', // Blue arch backdrop in hero
-    light: '#3B82F6',
-    dark: '#1D4ED8',
-    soft: '#EFF6FF',
+  // Accent: Teal
+  accent: {
+    DEFAULT: 'var(--color-accent)',
+    hover: 'var(--color-accent-hover)',
+    light: 'var(--color-accent-light)',
+    border: 'var(--color-accent-border)',
+    soft: 'rgba(15, 139, 141, 0.1)',
   },
 
-  // Hero Background
-  hero: {
-    bg: '#FAF7F2', // Warm cream background container
-    bgSoft: '#FBF9F5',
+  // Backgrounds
+  background: {
+    DEFAULT: '#FFFFFF',
+    secondary: 'var(--color-secondary-bg)',
+    card: '#FFFFFF',
   },
 
   // Status & Badges
   status: {
-    success: '#10B981', // Best Jobs Place badge dot, checkmark
-    successLight: '#ECFDF5',
-    cyan: '#06B6D4',
-    orange: '#F97316',
-    amber: '#F59E0B',
-    purple: '#8B5CF6',
+    success: 'var(--color-accent)',
+    successLight: 'var(--color-accent-light)',
+    amber: '#D97706',
+    amberLight: '#FEF3C7',
+    slate: 'var(--color-muted-text)',
   },
 
   // Neutrals & Text
   neutral: {
-    heading: '#101828', // Primary headings
-    body: '#475467',    // Paragraph / descriptions
-    muted: '#98A2B3',   // Placeholders, subtle captions
-    border: '#EAECF0',  // Dividers & card outlines
+    heading: 'var(--color-main-text)',
+    body: 'var(--color-muted-text)',
+    muted: '#6B7280',
+    border: 'var(--color-card-border)',
     white: '#FFFFFF',
-    surface: '#F8F9FA',
-  },
-
-  // Logo Accent Dots (The 4 signature dots in Jobhub logo)
-  logoDots: {
-    mint: '#00D09C',
-    blue: '#0075FF',
-    coral: '#FF5E5E',
-    yellow: '#FFAE00',
+    surface: 'var(--color-secondary-bg)',
   },
 };
 

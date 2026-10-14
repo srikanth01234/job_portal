@@ -106,7 +106,7 @@ const RECENT_JOBS = [
  * Matches the reference design with 2 full rows (6 job cards), category filter tabs, and interactive bookmarking
  */
 export default function RecentJobs() {
-  const [activeTab, setActiveTab] = useState('Design');
+  const [activeTab, setActiveTab] = useState('All Trades');
   const [bookmarkedJobs, setBookmarkedJobs] = useState([1]);
 
   const toggleBookmark = (id) => {
@@ -121,10 +121,10 @@ export default function RecentJobs() {
       {/* Header Row: Title & Count on left, Category Tabs on right */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-6 mb-8 sm:mb-12">
         <div>
-          <h2 className="text-2xl sm:text-4xl lg:text-[44px] font-black text-slate-950 tracking-tight leading-tight">
+          <h2 className="text-2xl sm:text-4xl lg:text-[44px] font-black text-primary tracking-tight leading-tight">
             Recent Jobs
           </h2>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-slate-900 font-bold">
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-main-text/80 font-medium">
             8 new opportunities posted today!
           </p>
         </div>
@@ -138,10 +138,10 @@ export default function RecentJobs() {
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer flex-shrink-0 ${
+                className={`px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer flex-shrink-0 ${
                   isActive
-                    ? 'bg-[#8B6CEF] text-white shadow-sm'
-                    : 'text-slate-800 hover:text-slate-950 bg-white border border-slate-200 hover:bg-slate-100'
+                    ? 'bg-primary text-white shadow-xs'
+                    : 'text-main-text hover:text-primary bg-white border border-card-border hover:bg-secondary-bg'
                 }`}
               >
                 {tab}
@@ -158,10 +158,10 @@ export default function RecentJobs() {
           return (
             <div
               key={job.id}
-              className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-card-elevated hover:-translate-y-1 transition-all duration-250 flex flex-col group cursor-pointer"
+              className="bg-white rounded-2xl border border-card-border overflow-hidden shadow-xs hover:shadow-md hover:border-accent/40 hover:-translate-y-1 transition-all duration-200 flex flex-col group cursor-pointer"
             >
               {/* Card Banner Image */}
-              <div className="relative h-40 sm:h-52 w-full overflow-hidden bg-slate-100">
+              <div className="relative h-40 sm:h-52 w-full overflow-hidden bg-secondary-bg">
                 <img
                   src={job.image}
                   alt={job.title}
@@ -170,7 +170,7 @@ export default function RecentJobs() {
 
                 {/* Urgent Pill Badge */}
                 {job.isUrgent && (
-                  <span className="absolute top-3 left-3 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-md text-[10px] sm:text-xs font-black bg-amber-100 text-amber-900 border border-amber-200 shadow-sm select-none">
+                  <span className="absolute top-3 left-3 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-xs select-none">
                     Urgent
                   </span>
                 )}
@@ -182,65 +182,65 @@ export default function RecentJobs() {
                 {/* Company & Job Type Row */}
                 <div className="flex items-center justify-between gap-2.5">
                   <div className="flex items-center gap-2 sm:gap-2.5">
-                    <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs sm:text-sm">
+                    <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-secondary-bg border border-card-border flex items-center justify-center text-xs sm:text-sm">
                       {job.companyLogo}
                     </span>
-                    <span className="text-xs sm:text-sm font-black text-slate-950">
+                    <span className="text-xs sm:text-sm font-bold text-main-text">
                       {job.company}
                     </span>
                   </div>
 
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-lg text-[10px] sm:text-xs font-black bg-purple-100 text-purple-900 border border-purple-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold bg-accent-light text-accent border border-accent-border">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                     {job.type}
                   </span>
                 </div>
 
                 {/* Job Title */}
-                <h3 className="text-base sm:text-lg font-black text-slate-950 tracking-tight leading-snug line-clamp-2 group-hover:text-[#7B61FF] transition-colors">
+                <h3 className="text-base sm:text-lg font-bold text-main-text tracking-tight leading-snug line-clamp-2 group-hover:text-accent transition-colors duration-200">
                   {job.title}
                 </h3>
 
                 {/* Time & Location */}
-                <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-slate-800 font-bold">
+                <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-main-text/75 font-medium">
                   <div className="flex items-center gap-1 sm:gap-1.5">
-                    <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700 stroke-[2.2]" />
+                    <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-main-text/60 stroke-[2]" />
                     <span>{job.time}</span>
                   </div>
                   <div className="flex items-center gap-1 sm:gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700 stroke-[2.2]" />
+                    <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-main-text/60 stroke-[2]" />
                     <span>{job.location}</span>
                   </div>
                 </div>
 
                 {/* Bottom Row: Salary & Action Icons */}
-                <div className="pt-2.5 sm:pt-3 border-t border-slate-200 flex items-center justify-between">
+                <div className="pt-2.5 sm:pt-3 border-t border-card-border flex items-center justify-between">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-lg sm:text-2xl font-black text-blue-700 tracking-tight">
+                    <span className="text-lg sm:text-2xl font-black text-primary tracking-tight">
                       {job.salary}
                     </span>
-                    <span className="text-[11px] sm:text-xs text-slate-800 font-extrabold">
+                    <span className="text-[11px] sm:text-xs text-main-text/70 font-semibold">
                       {job.period}
                     </span>
                   </div>
 
                   {/* Actions: Verified Shield & Bookmark */}
-                  <div className="flex items-center gap-2 sm:gap-2.5 text-slate-700">
-                    <ShieldCheck className="w-4 h-4 text-slate-700 hover:text-slate-950 transition-colors" />
+                  <div className="flex items-center gap-2 sm:gap-2.5 text-main-text/60">
+                    <ShieldCheck className="w-4 h-4 text-accent hover:text-[#0D7678] transition-colors" />
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleBookmark(job.id);
                       }}
-                      className="p-1 hover:text-purple-600 transition-colors focus:outline-none"
+                      className="p-1 hover:text-accent transition-colors focus:outline-none"
                       aria-label="Save job"
                     >
                       <Bookmark
-                        className={`w-4 h-4 ${
+                        className={`w-4 h-4 transition-colors ${
                           isSaved
-                            ? 'text-purple-600 fill-purple-600'
-                            : 'hover:text-purple-600'
+                            ? 'text-accent fill-accent'
+                            : 'hover:text-accent'
                         }`}
                       />
                     </button>

@@ -17,8 +17,8 @@ export default function Logo({ className = '', showText = true }) {
 
       {/* Brand Text */}
       {showText && (
-        <span className="text-2xl font-extrabold tracking-tight text-slate-900">
-          Stark <span className="text-[#7B61FF]">Jobs</span>
+        <span className="text-2xl font-black tracking-tight text-primary">
+          Stark <span className="text-accent">Jobs</span>
         </span>
       )}
     </a>

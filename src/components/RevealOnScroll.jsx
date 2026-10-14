@@ -18,9 +18,9 @@ export default function RevealOnScroll({
   className = '',
   delay = 0,
   direction = 'up',
-  distance = 36,
-  duration = 850,
-  threshold = 0.12,
+  distance = 18,
+  duration = 450,
+  threshold = 0.1,
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const elementRef = useRef(null);

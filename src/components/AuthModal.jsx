@@ -7,7 +7,13 @@ import { colors } from '../theme/colors';
  * Reusable AuthModal Component
  * Supports seamless switching between Sign In and Sign Up, role selection, social login, and validation
  */
-export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
+export default function AuthModal({
+  isOpen,
+  onClose,
+  initialMode = 'signin',
+  onNavigateCompany,
+  onNavigateAdmin
+}) {
   const [mode, setMode] = useState(initialMode); // 'signin' or 'signup'
   const [userRole, setUserRole] = useState('candidate'); // 'candidate' or 'employer'
   const [showPassword, setShowPassword] = useState(false);
@@ -46,8 +52,31 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(`Submitted ${mode} form:`, { ...formData, userRole });
-    alert(`${mode === 'signin' ? 'Signed in' : 'Account created'} successfully! (Demo)`);
+    const emailLower = (formData.email || '').toLowerCase();
+
+    // Check for Super Admin
+    if (emailLower.includes('superadmin') || emailLower.includes('admin@starkjobs')) {
+      alert('Authenticated as Super Admin! Redirecting to Master Control Environment...');
+      onClose();
+      if (onNavigateAdmin) onNavigateAdmin();
+      return;
+    }
+
+    // Check for Employer / Company Admin
+    if (
+      userRole === 'employer' ||
+      emailLower.includes('company') ||
+      emailLower.includes('employer') ||
+      emailLower.includes('abc')
+    ) {
+      alert('Authenticated as Employer (ABC Industrial Services)! Redirecting to Employer Dashboard...');
+      onClose();
+      if (onNavigateCompany) onNavigateCompany();
+      return;
+    }
+
+    // Standard Candidate
+    alert(`${mode === 'signin' ? 'Signed in' : 'Account created'} successfully as Candidate! (Demo)`);
     onClose();
   };
 
@@ -60,14 +89,14 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
       />
 
       {/* Modal Dialog Card */}
-      <div className="relative w-full max-w-[480px] bg-white rounded-[24px] sm:rounded-[32px] shadow-2xl border border-slate-100 p-5 sm:p-9 z-10 transition-all animate-in zoom-in-95 duration-200 my-4 sm:my-8">
+      <div className="relative w-full max-w-[480px] bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-card-border p-5 sm:p-9 z-10 transition-all animate-in zoom-in-95 duration-200 my-4 sm:my-8">
         
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
           aria-label="Close modal"
-          className="absolute top-4 right-4 sm:top-5 sm:right-5 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 flex items-center justify-center transition-colors cursor-pointer"
+          className="absolute top-4 right-4 sm:top-5 sm:right-5 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-secondary-bg hover:bg-slate-200 text-main-text/70 hover:text-main-text flex items-center justify-center transition-colors cursor-pointer"
         >
           <X className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
         </button>
@@ -75,10 +104,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
         {/* Modal Header: Logo + Switcher */}
         <div className="flex flex-col items-center text-center mb-6">
           <Logo className="scale-110 mb-3" />
-          <h3 className="text-2xl sm:text-[26px] font-black text-slate-950 tracking-tight">
+          <h3 className="text-2xl sm:text-[26px] font-black text-primary tracking-tight">
             {mode === 'signin' ? 'Welcome Back!' : 'Create your Account'}
           </h3>
-          <p className="text-xs sm:text-sm text-slate-700 mt-1 font-semibold">
+          <p className="text-xs sm:text-sm text-main-text/75 mt-1 font-medium">
             {mode === 'signin'
               ? 'Enter your credentials to access your Stark Jobs portal'
               : 'Join over 500,000 skilled technicians & employers across India'}
@@ -86,14 +115,14 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
         </div>
 
         {/* Mode Toggle Tabs (Sign In / Sign Up) */}
-        <div className="flex items-center p-1 bg-slate-100 rounded-2xl mb-6 border border-slate-200">
+        <div className="flex items-center p-1 bg-secondary-bg rounded-xl mb-6 border border-card-border">
           <button
             type="button"
             onClick={() => setMode('signin')}
-            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all cursor-pointer ${
+            className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all cursor-pointer ${
               mode === 'signin'
-                ? 'bg-white text-slate-950 shadow-sm'
-                : 'text-slate-700 hover:text-slate-950'
+                ? 'bg-white text-primary shadow-xs'
+                : 'text-main-text/70 hover:text-main-text'
             }`}
           >
             Sign In
@@ -101,52 +130,60 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
           <button
             type="button"
             onClick={() => setMode('signup')}
-            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all cursor-pointer ${
+            className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all cursor-pointer ${
               mode === 'signup'
-                ? 'bg-white text-slate-950 shadow-sm'
-                : 'text-slate-700 hover:text-slate-950'
+                ? 'bg-white text-primary shadow-xs'
+                : 'text-main-text/70 hover:text-main-text'
             }`}
           >
             Sign Up
           </button>
         </div>
 
-        {/* Optional Role Selector for Sign Up */}
-        {mode === 'signup' && (
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            <button
-              type="button"
-              onClick={() => setUserRole('candidate')}
-              className={`p-3 rounded-2xl border text-left flex items-center gap-2.5 transition-all cursor-pointer ${
-                userRole === 'candidate'
-                  ? 'border-[#7B61FF] bg-purple-50 text-[#7B61FF] ring-2 ring-[#7B61FF]'
-                  : 'border-slate-300 hover:border-slate-400 text-slate-800'
-              }`}
-            >
-              <GraduationCap className="w-5 h-5 flex-shrink-0" />
-              <div>
-                <p className="text-xs font-black leading-tight">Job Seeker</p>
-                <p className="text-[11px] text-slate-600 mt-0.5 font-semibold">Find work</p>
-              </div>
-            </button>
+        {/* Role Selector (Available for both Sign In and Sign Up) */}
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <button
+            type="button"
+            onClick={() => {
+              setUserRole('candidate');
+              if (mode === 'signin') {
+                setFormData(prev => ({ ...prev, email: 'candidate@starkjobs.com' }));
+              }
+            }}
+            className={`p-3 rounded-xl border text-left flex items-center gap-2.5 transition-all cursor-pointer ${
+              userRole === 'candidate'
+                ? 'border-accent bg-accent-light text-accent ring-2 ring-accent'
+                : 'border-card-border hover:border-slate-300 text-main-text'
+            }`}
+          >
+            <GraduationCap className="w-5 h-5 flex-shrink-0" />
+            <div>
+              <p className="text-xs font-bold leading-tight">Job Seeker</p>
+              <p className="text-[11px] text-main-text/70 mt-0.5 font-medium">Find work</p>
+            </div>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setUserRole('employer')}
-              className={`p-3 rounded-2xl border text-left flex items-center gap-2.5 transition-all cursor-pointer ${
-                userRole === 'employer'
-                  ? 'border-[#7B61FF] bg-purple-50 text-[#7B61FF] ring-2 ring-[#7B61FF]'
-                  : 'border-slate-300 hover:border-slate-400 text-slate-800'
-              }`}
-            >
-              <Briefcase className="w-5 h-5 flex-shrink-0" />
-              <div>
-                <p className="text-xs font-black leading-tight">Employer</p>
-                <p className="text-[11px] text-slate-600 mt-0.5 font-semibold">Post jobs</p>
-              </div>
-            </button>
-          </div>
-        )}
+          <button
+            type="button"
+            onClick={() => {
+              setUserRole('employer');
+              if (mode === 'signin') {
+                setFormData(prev => ({ ...prev, email: 'hr@abcindustrial.in' }));
+              }
+            }}
+            className={`p-3 rounded-xl border text-left flex items-center gap-2.5 transition-all cursor-pointer ${
+              userRole === 'employer'
+                ? 'border-blue-600 bg-blue-50 text-blue-700 ring-2 ring-blue-600'
+                : 'border-card-border hover:border-slate-300 text-main-text'
+            }`}
+          >
+            <Briefcase className="w-5 h-5 flex-shrink-0 text-blue-600" />
+            <div>
+              <p className="text-xs font-bold leading-tight">Employer</p>
+              <p className="text-[11px] text-main-text/70 mt-0.5 font-medium">Post jobs</p>
+            </div>
+          </button>
+        </div>
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -154,18 +191,18 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
           {/* Full Name Field (Sign Up Only) */}
           {mode === 'signup' && (
             <div>
-              <label className="block text-xs font-black text-slate-900 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-main-text uppercase tracking-wider mb-1.5">
                 Full Name
               </label>
               <div className="relative flex items-center">
-                <User className="w-4 h-4 text-slate-600 absolute left-3.5" />
+                <User className="w-4 h-4 text-main-text/50 absolute left-3.5" />
                 <input
                   type="text"
                   required
                   placeholder="e.g. Ramesh Kumar"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-950 font-bold placeholder-slate-500 focus:outline-none focus:border-[#7B61FF] focus:bg-white transition-colors"
+                  className="w-full bg-secondary-bg border border-card-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-main-text font-medium placeholder-slate-400 focus:outline-none focus:border-accent focus:bg-white transition-colors"
                 />
               </div>
             </div>
@@ -173,41 +210,41 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
 
           {/* Email Address */}
           <div>
-            <label className="block text-xs font-black text-slate-900 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-main-text uppercase tracking-wider mb-1.5">
               Email Address
             </label>
             <div className="relative flex items-center">
-              <Mail className="w-4 h-4 text-slate-600 absolute left-3.5" />
+              <Mail className="w-4 h-4 text-main-text/50 absolute left-3.5" />
               <input
                 type="email"
                 required
                 placeholder="name@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-950 font-bold placeholder-slate-500 focus:outline-none focus:border-[#7B61FF] focus:bg-white transition-colors"
+                className="w-full bg-secondary-bg border border-card-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-main-text font-medium placeholder-slate-400 focus:outline-none focus:border-accent focus:bg-white transition-colors"
               />
             </div>
           </div>
 
           {/* Password Field */}
           <div>
-            <label className="block text-xs font-black text-slate-900 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-main-text uppercase tracking-wider mb-1.5">
               Password
             </label>
             <div className="relative flex items-center">
-              <Lock className="w-4 h-4 text-slate-600 absolute left-3.5" />
+              <Lock className="w-4 h-4 text-main-text/50 absolute left-3.5" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-950 font-bold placeholder-slate-500 focus:outline-none focus:border-[#7B61FF] focus:bg-white transition-colors"
+                className="w-full bg-secondary-bg border border-card-border rounded-xl pl-10 pr-10 py-2.5 text-sm text-main-text font-medium placeholder-slate-400 focus:outline-none focus:border-accent focus:bg-white transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 text-slate-600 hover:text-slate-950 focus:outline-none cursor-pointer"
+                className="absolute right-3.5 text-main-text/50 hover:text-main-text focus:outline-none cursor-pointer"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -217,35 +254,35 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
           {/* Options Row (Remember me / Forgot password) */}
           {mode === 'signin' ? (
             <div className="flex items-center justify-between text-xs pt-1">
-              <label className="flex items-center gap-2 text-slate-800 font-bold cursor-pointer">
+              <label className="flex items-center gap-2 text-main-text font-medium cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formData.rememberMe}
                   onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
-                  className="w-4 h-4 text-[#7B61FF] rounded border-slate-300 focus:ring-[#7B61FF]"
+                  className="w-4 h-4 text-accent rounded border-card-border focus:ring-accent"
                 />
                 <span>Remember me</span>
               </label>
-              <a href="#" className="font-extrabold text-[#7B61FF] hover:underline">
+              <a href="#" className="font-bold text-accent hover:underline">
                 Forgot password?
               </a>
             </div>
           ) : (
-            <div className="flex items-start gap-2 text-xs text-slate-800 font-medium pt-1">
+            <div className="flex items-start gap-2 text-xs text-main-text font-medium pt-1">
               <input
                 type="checkbox"
                 required
                 checked={formData.agreeTerms}
                 onChange={(e) => setFormData({ ...formData, agreeTerms: e.target.checked })}
-                className="w-4 h-4 text-[#7B61FF] rounded border-slate-300 focus:ring-[#7B61FF] mt-0.5"
+                className="w-4 h-4 text-accent rounded border-card-border focus:ring-accent mt-0.5"
               />
               <span>
                 I agree to the{' '}
-                <a href="#" className="text-[#7B61FF] font-bold underline">
+                <a href="#" className="text-accent font-bold underline">
                   Terms of Service
                 </a>{' '}
                 and{' '}
-                <a href="#" className="text-[#7B61FF] font-bold underline">
+                <a href="#" className="text-accent font-bold underline">
                   Privacy Policy
                 </a>
               </span>
@@ -255,8 +292,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
           {/* Primary Submit Button */}
           <button
             type="submit"
-            className="w-full py-3.5 text-sm font-bold text-white rounded-xl transition-all duration-200 hover:opacity-95 active:scale-95 shadow-purple-btn cursor-pointer mt-2"
-            style={{ backgroundColor: colors.primary.DEFAULT }}
+            className="w-full py-3.5 text-sm font-bold text-white rounded-xl transition-all duration-200 bg-primary hover:bg-primary-hover active:scale-95 shadow-xs cursor-pointer mt-2"
           >
             {mode === 'signin' ? 'Sign In to Stark Jobs' : 'Create Account'}
           </button>
@@ -265,9 +301,9 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
         {/* Or Divider */}
         <div className="relative my-6 text-center">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-300" />
+            <div className="w-full border-t border-card-border" />
           </div>
-          <span className="relative bg-white px-3 text-xs text-slate-600 font-bold">
+          <span className="relative bg-white px-3 text-xs text-main-text/60 font-medium">
             or continue with
           </span>
         </div>
@@ -278,7 +314,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
           <button
             type="button"
             onClick={() => alert('Google login integration (Demo)')}
-            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-xs font-bold text-slate-900 transition-colors cursor-pointer"
+            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-card-border hover:bg-secondary-bg text-xs font-semibold text-main-text transition-colors cursor-pointer"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path
@@ -305,7 +341,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
           <button
             type="button"
             onClick={() => alert('LinkedIn login integration (Demo)')}
-            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-xs font-bold text-slate-900 transition-colors cursor-pointer"
+            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-card-border hover:bg-secondary-bg text-xs font-semibold text-main-text transition-colors cursor-pointer"
           >
             <svg className="w-4 h-4 text-[#0077B5]" fill="currentColor" viewBox="0 0 24 24">
               <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
@@ -315,14 +351,14 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
         </div>
 
         {/* Bottom Switcher */}
-        <div className="mt-6 text-center text-xs text-slate-700 font-semibold">
+        <div className="mt-6 text-center text-xs text-main-text/75 font-medium">
           {mode === 'signin' ? (
             <p>
               Don't have an account?{' '}
               <button
                 type="button"
                 onClick={() => setMode('signup')}
-                className="font-extrabold text-[#7B61FF] hover:underline cursor-pointer"
+                className="font-bold text-accent hover:underline cursor-pointer"
               >
                 Sign up for free
               </button>
@@ -333,7 +369,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }) {
               <button
                 type="button"
                 onClick={() => setMode('signin')}
-                className="font-extrabold text-[#7B61FF] hover:underline cursor-pointer"
+                className="font-bold text-accent hover:underline cursor-pointer"
               >
                 Sign in
               </button>

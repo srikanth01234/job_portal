@@ -84,10 +84,10 @@ export default function HappyCustomers() {
       
       {/* Header: Title and Subtitle */}
       <div className="max-w-2xl mb-8 sm:mb-12">
-        <h2 className="text-2xl sm:text-4xl lg:text-[44px] font-black text-slate-950 tracking-tight leading-tight">
+        <h2 className="text-2xl sm:text-4xl lg:text-[44px] font-black text-primary tracking-tight leading-tight">
           Our Happy Customer
         </h2>
-        <p className="mt-2 sm:mt-3 text-sm sm:text-base lg:text-[17px] text-slate-800 leading-relaxed max-w-xl font-semibold">
+        <p className="mt-2 sm:mt-3 text-sm sm:text-base lg:text-[17px] text-main-text/80 leading-relaxed max-w-xl font-medium">
           Discover how thousands of skilled technicians and contractors find verified trade jobs and transparent salaries across India.
         </p>
       </div>
@@ -97,14 +97,14 @@ export default function HappyCustomers() {
         {currentCards.map((item) => (
           <div
             key={item.id}
-            className="bg-white rounded-[20px] sm:rounded-[28px] border border-slate-200 p-5 sm:p-9 shadow-xs hover:shadow-card-elevated transition-all duration-250 flex flex-col justify-between group"
+            className="bg-white rounded-2xl border border-card-border p-5 sm:p-9 shadow-xs hover:shadow-md hover:border-accent/30 transition-all duration-200 flex flex-col justify-between group"
           >
             {/* Top Row: Diamond Avatar + Quote & Review Content */}
             <div className="flex items-start gap-3.5 sm:gap-6">
               
               {/* Diamond-shaped Avatar Frame */}
               <div className="relative flex-shrink-0 pt-1.5 pl-1.5 sm:pt-2 sm:pl-2">
-                <div className="w-11 h-11 sm:w-16 sm:h-16 rotate-45 rounded-lg sm:rounded-2xl overflow-hidden border-2 border-slate-100 shadow-xs bg-slate-100">
+                <div className="w-11 h-11 sm:w-16 sm:h-16 rotate-45 rounded-lg sm:rounded-2xl overflow-hidden border-2 border-card-border shadow-xs bg-secondary-bg">
                   <img
                     src={item.avatar}
                     alt={item.author}
@@ -115,9 +115,9 @@ export default function HappyCustomers() {
 
               {/* Review Text */}
               <div className="flex-1 min-w-0">
-                {/* Pastel Blue Double Quote Icon */}
+                {/* Teal Double Quote Icon */}
                 <svg
-                  className="w-6 h-6 sm:w-8 sm:h-8 text-[#93C5FD]/70 mb-1"
+                  className="w-6 h-6 sm:w-8 sm:h-8 text-accent/40 mb-1"
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >
@@ -125,12 +125,12 @@ export default function HappyCustomers() {
                 </svg>
 
                 {/* Review Title */}
-                <h3 className="text-base sm:text-[19px] font-black text-slate-950 tracking-tight leading-snug">
+                <h3 className="text-base sm:text-[19px] font-bold text-main-text tracking-tight leading-snug">
                   {item.title}
                 </h3>
 
                 {/* Review Body */}
-                <p className="mt-2 text-xs sm:text-[15px] text-slate-800 leading-relaxed font-medium">
+                <p className="mt-2 text-xs sm:text-[15px] text-main-text/75 leading-relaxed font-normal">
                   {item.quote}
                 </p>
               </div>
@@ -138,13 +138,13 @@ export default function HappyCustomers() {
             </div>
 
             {/* Bottom Row: Author Details & Star Rating */}
-            <div className="pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-slate-200 flex items-center justify-between gap-3">
+            <div className="pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-card-border flex items-center justify-between gap-3">
               {/* Author & Role */}
               <div>
-                <h4 className="text-sm sm:text-[15px] font-black text-slate-950">
+                <h4 className="text-sm sm:text-[15px] font-bold text-main-text">
                   {item.author}
                 </h4>
-                <p className="text-[11px] sm:text-xs text-slate-700 mt-0.5 font-bold">
+                <p className="text-[11px] sm:text-xs text-main-text/65 mt-0.5 font-medium">
                   {item.role}
                 </p>
               </div>
@@ -176,8 +176,8 @@ export default function HappyCustomers() {
               aria-label={`Go to slide ${index + 1}`}
               className={`transition-all duration-200 cursor-pointer rounded-full ${
                 isActive
-                  ? 'w-6 h-2.5 bg-[#8B6CEF]'
-                  : 'w-2.5 h-2.5 bg-slate-300 hover:bg-slate-400'
+                  ? 'w-6 h-2.5 bg-primary'
+                  : 'w-2.5 h-2.5 bg-card-border hover:bg-[#CBD5E1]'
               }`}
             />
           );

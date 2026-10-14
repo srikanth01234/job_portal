@@ -97,46 +97,46 @@ export default function Navbar({ onOpenAuth }) {
                   href={item.href}
                   className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[14px] transition-all duration-200 select-none ${
                     activeDropdown === item.label
-                      ? 'bg-slate-100 text-slate-950 font-bold'
-                      : 'text-slate-800 font-bold hover:text-[#7B61FF] hover:bg-purple-50/70'
+                      ? 'bg-secondary-bg text-primary font-bold'
+                      : 'text-main-text font-semibold hover:text-accent hover:bg-secondary-bg'
                   }`}
                 >
                   <span>{item.label}</span>
                   {item.hasDropdown && (
                     <ChevronDown
-                      className={`w-3.5 h-3.5 text-slate-600 stroke-[2.5] transition-transform duration-200 ${
-                        activeDropdown === item.label ? 'rotate-180 text-purple-600' : ''
+                      className={`w-3.5 h-3.5 text-muted-text stroke-[2.5] transition-transform duration-200 ${
+                        activeDropdown === item.label ? 'rotate-180 text-accent' : ''
                       }`}
                     />
                   )}
                 </a>
 
-                {/* Modern Dropdown Glass Card */}
+                {/* Modern Dropdown Card */}
                 {item.hasDropdown && activeDropdown === item.label && (
                   <div className="absolute top-full left-0 pt-2 w-64 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                    <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-card-elevated border border-slate-100 p-2 space-y-1">
+                    <div className="bg-white rounded-2xl shadow-card-elevated border border-card-border p-2 space-y-1">
                       {item.dropdownItems.map((subItem) => (
                         <a
                           key={subItem.name}
                           href="#"
-                          className="flex items-start justify-between p-2.5 rounded-xl hover:bg-purple-50/60 transition-colors group"
+                          className="flex items-start justify-between p-2.5 rounded-xl hover:bg-secondary-bg transition-colors group"
                         >
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="text-[13px] font-semibold text-slate-800 group-hover:text-purple-700">
+                              <span className="text-[13px] font-bold text-main-text group-hover:text-accent">
                                 {subItem.name}
                               </span>
                               {subItem.badge && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                                <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-accent-light text-accent border border-accent-border">
                                   {subItem.badge}
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-slate-600 font-medium mt-0.5 group-hover:text-slate-800">
+                            <p className="text-[11px] text-muted-text font-medium mt-0.5 group-hover:text-main-text">
                               {subItem.desc}
                             </p>
                           </div>
-                          <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:text-purple-600 transition-all flex-shrink-0 mt-0.5" />
+                          <ArrowUpRight className="w-3.5 h-3.5 text-[#9CA3AF] opacity-0 group-hover:opacity-100 group-hover:text-accent transition-all flex-shrink-0 mt-0.5" />
                         </a>
                       ))}
                     </div>
@@ -152,24 +152,20 @@ export default function Navbar({ onOpenAuth }) {
             <button
               type="button"
               onClick={() => onOpenAuth && onOpenAuth('signup')}
-              className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[14px] font-bold text-[#7B61FF] hover:bg-purple-50/80 transition-all duration-200 group cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[14px] font-bold text-accent hover:bg-accent-light transition-all duration-200 group cursor-pointer"
             >
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#7B61FF]" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
               </span>
               <span>Apply Now</span>
             </button>
 
-            {/* Modern Sign In Button with subtle gradient and glow */}
+            {/* Modern Sign In Button */}
             <button
               type="button"
               onClick={() => onOpenAuth && onOpenAuth('signin')}
-              className="relative inline-flex items-center justify-center px-4 sm:px-6 py-2 text-xs sm:text-[14px] font-bold text-white rounded-xl transition-all duration-200 hover:shadow-purple-btn hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
-              style={{
-                backgroundColor: colors.primary.DEFAULT,
-                boxShadow: '0 4px 14px 0 rgba(123, 97, 255, 0.35)',
-              }}
+              className="relative inline-flex items-center justify-center px-4 sm:px-6 py-2 text-xs sm:text-[14px] font-bold text-white bg-primary hover:bg-primary-hover rounded-xl transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
             >
               Sign in
             </button>
@@ -178,7 +174,7 @@ export default function Navbar({ onOpenAuth }) {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-slate-800 hover:text-slate-950 rounded-xl hover:bg-slate-100 transition-colors focus:outline-none cursor-pointer"
+              className="lg:hidden p-2 text-main-text hover:text-primary rounded-xl hover:bg-secondary-bg transition-colors focus:outline-none cursor-pointer"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6 stroke-[2.2]" /> : <Menu className="w-6 h-6 stroke-[2.2]" />}
@@ -189,11 +185,11 @@ export default function Navbar({ onOpenAuth }) {
 
       {/* Modern Mobile Slide-Down Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-200/90 bg-white/98 backdrop-blur-2xl px-5 py-5 space-y-3 shadow-2xl animate-in slide-in-from-top-2 duration-200 max-h-[calc(100vh-68px)] overflow-y-auto">
+        <div className="lg:hidden border-t border-card-border bg-white px-5 py-5 space-y-3 shadow-xl animate-in slide-in-from-top-2 duration-200 max-h-[calc(100vh-68px)] overflow-y-auto">
           {NAV_ITEMS.map((item) => {
             const isExpanded = mobileExpandedItem === item.label;
             return (
-              <div key={item.label} className="border-b border-slate-100 pb-2">
+              <div key={item.label} className="border-b border-card-border pb-2">
                 <div
                   className="flex items-center justify-between py-2 cursor-pointer select-none"
                   onClick={() => {
@@ -204,18 +200,18 @@ export default function Navbar({ onOpenAuth }) {
                     }
                   }}
                 >
-                  <span className="text-base font-extrabold text-slate-900 hover:text-purple-700">
+                  <span className="text-base font-bold text-main-text hover:text-accent">
                     {item.label}
                   </span>
                   {item.hasDropdown && (
                     <button
                       type="button"
                       aria-label="Toggle submenu"
-                      className="p-1 text-slate-700"
+                      className="p-1 text-muted-text"
                     >
                       <ChevronDown
                         className={`w-4 h-4 transition-transform duration-200 ${
-                          isExpanded ? 'rotate-180 text-purple-600' : ''
+                          isExpanded ? 'rotate-180 text-accent' : ''
                         }`}
                       />
                     </button>
@@ -224,25 +220,25 @@ export default function Navbar({ onOpenAuth }) {
 
                 {/* Submenu links */}
                 {item.hasDropdown && isExpanded && (
-                  <div className="pl-3 pr-1 py-2 space-y-2 bg-slate-50/80 rounded-xl my-1">
+                  <div className="pl-3 pr-1 py-2 space-y-2 bg-secondary-bg rounded-xl my-1 border border-card-border">
                     {item.dropdownItems.map((subItem) => (
                       <a
                         key={subItem.name}
                         href="#"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="block py-1.5 px-2.5 rounded-lg hover:bg-purple-50 transition-colors"
+                        className="block py-1.5 px-2.5 rounded-lg hover:bg-white transition-colors"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-slate-800">
+                          <span className="text-sm font-bold text-main-text">
                             {subItem.name}
                           </span>
                           {subItem.badge && (
-                            <span className="text-[10px] font-black px-1.5 py-0.2 rounded-full bg-purple-100 text-purple-700">
+                            <span className="text-[10px] font-black px-1.5 py-0.2 rounded-full bg-accent-light text-accent border border-accent-border">
                               {subItem.badge}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-slate-600 mt-0.5">
+                        <p className="text-xs text-muted-text mt-0.5">
                           {subItem.desc}
                         </p>
                       </a>
@@ -261,11 +257,11 @@ export default function Navbar({ onOpenAuth }) {
                 setMobileMenuOpen(false);
                 if (onOpenAuth) onOpenAuth('signup');
               }}
-              className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold text-[#7B61FF] bg-purple-50 hover:bg-purple-100 rounded-xl cursor-pointer transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold text-accent bg-accent-light hover:bg-[#E0F2F2] rounded-xl cursor-pointer transition-colors border border-accent-border"
             >
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#7B61FF]" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
               </span>
               <span>Apply Now</span>
             </button>
@@ -275,8 +271,7 @@ export default function Navbar({ onOpenAuth }) {
                 setMobileMenuOpen(false);
                 if (onOpenAuth) onOpenAuth('signin');
               }}
-              className="w-full py-3 text-center text-sm font-bold text-white rounded-xl shadow-purple-btn cursor-pointer transition-transform active:scale-95"
-              style={{ backgroundColor: colors.primary.DEFAULT }}
+              className="w-full py-3 text-center text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm cursor-pointer transition-transform active:scale-95"
             >
               Sign in to Stark Jobs
             </button>

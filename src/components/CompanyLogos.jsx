@@ -89,7 +89,7 @@ export default function CompanyLogos() {
           type="button"
           onClick={handlePrev}
           aria-label="Previous company logos"
-          className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-slate-200/90 hover:bg-slate-300 text-slate-800 flex items-center justify-center transition-all duration-200 flex-shrink-0 cursor-pointer active:scale-95 shadow-xs"
+          className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-secondary-bg hover:bg-card-border text-main-text flex items-center justify-center transition-all duration-200 flex-shrink-0 cursor-pointer active:scale-95 shadow-xs border border-card-border"
         >
           <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
         </button>
@@ -102,7 +102,7 @@ export default function CompanyLogos() {
           {COMPANIES.map((company) => (
             <div
               key={company.name}
-              className="bg-white rounded-2xl border border-slate-200 hover:border-slate-300 shadow-xs hover:shadow-md transition-all duration-200 h-20 sm:h-28 min-w-[145px] sm:min-w-0 flex items-center justify-center p-3 sm:p-4 group cursor-pointer snap-start flex-shrink-0 sm:flex-shrink"
+              className="bg-white rounded-2xl border border-card-border hover:border-accent/40 shadow-xs hover:shadow-sm transition-all duration-200 h-20 sm:h-28 min-w-[145px] sm:min-w-0 flex items-center justify-center p-3 sm:p-4 group cursor-pointer snap-start flex-shrink-0 sm:flex-shrink"
             >
               <div className="transition-transform duration-200 group-hover:scale-105 select-none scale-90 sm:scale-100">
                 {company.logo}
@@ -116,7 +116,7 @@ export default function CompanyLogos() {
           type="button"
           onClick={handleNext}
           aria-label="Next company logos"
-          className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-slate-200/90 hover:bg-slate-300 text-slate-800 flex items-center justify-center transition-all duration-200 flex-shrink-0 cursor-pointer active:scale-95 shadow-xs"
+          className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-secondary-bg hover:bg-card-border text-main-text flex items-center justify-center transition-all duration-200 flex-shrink-0 cursor-pointer active:scale-95 shadow-xs border border-card-border"
         >
           <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
         </button>
