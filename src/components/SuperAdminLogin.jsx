@@ -27,7 +27,7 @@ import Logo from './Logo';
  * - Typography: Inter
  * - Cards: Subtle borders, restrained shadows
  */
-export default function SuperAdminLogin({ onBackToHome, onLoginSuccess, onLoginCompanySuccess }) {
+export default function SuperAdminLogin({ onBackToHome, onLoginSuccess, onLoginCompanySuccess, onLoginSeekerSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [securityPin, setSecurityPin] = useState('');
@@ -53,6 +53,14 @@ export default function SuperAdminLogin({ onBackToHome, onLoginSuccess, onLoginC
     setErrorMessage('');
   };
 
+  // Auto-fill Job Seeker candidate demo credentials
+  const handleFillSeekerDemo = () => {
+    setEmail('kavin.raj@gmail.com');
+    setPassword('KavinPass#2026');
+    setSecurityPin('789012');
+    setErrorMessage('');
+  };
+
   const handleLogin = (e) => {
     e.preventDefault();
     setErrorMessage('');
@@ -69,6 +77,15 @@ export default function SuperAdminLogin({ onBackToHome, onLoginSuccess, onLoginC
       setIsLoading(false);
       setLoginSuccess(true);
       const emailLower = email.toLowerCase();
+
+      if (emailLower.includes('kavin') || emailLower.includes('seeker') || emailLower.includes('candidate')) {
+        if (onLoginSeekerSuccess) {
+          setTimeout(() => {
+            onLoginSeekerSuccess();
+          }, 600);
+          return;
+        }
+      }
 
       if (emailLower.includes('abc') || emailLower.includes('company') || emailLower.includes('employer')) {
         if (onLoginCompanySuccess) {
@@ -367,13 +384,29 @@ export default function SuperAdminLogin({ onBackToHome, onLoginSuccess, onLoginC
                     >
                       🏢 Company Demo
                     </button>
+                    <button
+                      type="button"
+                      onClick={handleFillSeekerDemo}
+                      className="px-2.5 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-bold transition-colors cursor-pointer"
+                    >
+                      👤 Seeker Demo
+                    </button>
                     {onLoginCompanySuccess && (
                       <button
                         type="button"
                         onClick={onLoginCompanySuccess}
                         className="px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold transition-colors cursor-pointer"
                       >
-                        🚀 Employer Portal
+                        🚀 Employer
+                      </button>
+                    )}
+                    {onLoginSeekerSuccess && (
+                      <button
+                        type="button"
+                        onClick={onLoginSeekerSuccess}
+                        className="px-2.5 py-1.5 rounded-lg bg-sky-50 border border-sky-200 text-sky-700 hover:bg-sky-100 font-bold transition-colors cursor-pointer"
+                      >
+                        🎯 Seeker Portal
                       </button>
                     )}
                   </div>

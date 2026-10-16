@@ -21,11 +21,99 @@ import CompanyMyJobs from './company/CompanyMyJobs';
 import CompanyApplicants from './company/CompanyApplicants';
 import CompanyInterviews from './company/CompanyInterviews';
 import CompanyAccountSettings from './company/CompanyAccountSettings';
+import JobSeekerDashboard from './seeker/JobSeekerDashboard';
+import JobSeekerFindJobs from './seeker/JobSeekerFindJobs';
+import JobSeekerApplications from './seeker/JobSeekerApplications';
+import JobSeekerProfile from './seeker/JobSeekerProfile';
+import JobSeekerSavedJobs from './seeker/JobSeekerSavedJobs';
+import JobSeekerSettings from './seeker/JobSeekerSettings';
 
 // Helper to determine the current page from URL path or hash
 const getPageFromUrl = () => {
   const path = window.location.pathname.toLowerCase();
   const hash = window.location.hash.toLowerCase();
+
+  // Job Seeker Settings routes
+  if (
+    path.includes('seeker/settings') ||
+    path.includes('seeker-settings') ||
+    path.includes('job-seeker/settings') ||
+    path.includes('job-seeker-settings') ||
+    hash === '#seeker-settings' ||
+    hash === '#seeker/settings'
+  ) {
+    return 'seeker-settings';
+  }
+
+  // Job Seeker Saved Jobs routes
+  if (
+    path.includes('seeker/saved-jobs') ||
+    path.includes('seeker-saved-jobs') ||
+    path.includes('job-seeker/saved-jobs') ||
+    path.includes('saved-jobs') ||
+    path.includes('seeker/saved') ||
+    hash === '#seeker-saved-jobs' ||
+    hash === '#saved-jobs' ||
+    hash === '#seeker/saved-jobs'
+  ) {
+    return 'seeker-saved-jobs';
+  }
+
+  // Job Seeker Profile & Resume routes
+  if (
+    path.includes('seeker/profile') ||
+    path.includes('seeker-profile') ||
+    path.includes('job-seeker/profile') ||
+    path.includes('my-profile') ||
+    path.includes('seeker/resume') ||
+    hash === '#seeker-profile' ||
+    hash === '#seeker/profile'
+  ) {
+    return 'seeker-profile';
+  }
+
+  // Job Seeker Applications routes
+  if (
+    path.includes('seeker/applications') ||
+    path.includes('seeker-applications') ||
+    path.includes('job-seeker/applications') ||
+    path.includes('my-applications') ||
+    hash === '#seeker-applications' ||
+    hash === '#applications' ||
+    hash === '#my-applications' ||
+    hash === '#seeker/applications'
+  ) {
+    return 'seeker-applications';
+  }
+
+  // Job Seeker Find Jobs routes
+  if (
+    path.includes('seeker/find-jobs') ||
+    path.includes('seeker-jobs') ||
+    path.includes('job-seeker/find-jobs') ||
+    path.includes('seeker/jobs') ||
+    path === '/find-jobs' ||
+    hash === '#seeker-jobs' ||
+    hash === '#find-jobs' ||
+    hash === '#seeker/find-jobs'
+  ) {
+    return 'seeker-jobs';
+  }
+
+  // Job Seeker Dashboard routes
+  if (
+    path.includes('seeker/dashboard') ||
+    path.includes('seeker-dashboard') ||
+    path.includes('job-seeker') ||
+    path.includes('job-seeker-dashboard') ||
+    path === '/seeker' ||
+    path.startsWith('/seeker/') ||
+    hash === '#seeker' ||
+    hash === '#job-seeker' ||
+    hash === '#seeker-dashboard'
+  ) {
+    return 'seeker-dashboard';
+  }
 
   // Employer / Company Account Settings route
   if (
@@ -304,11 +392,131 @@ function App() {
     }
   };
 
+  const handleNavigateSeekerDashboard = () => {
+    window.history.pushState(null, '', '/seeker/dashboard');
+    setCurrentPage('seeker-dashboard');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNavigateSeekerJobs = () => {
+    window.history.pushState(null, '', '/seeker/find-jobs');
+    setCurrentPage('seeker-jobs');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNavigateSeekerApplications = () => {
+    window.history.pushState(null, '', '/seeker/applications');
+    setCurrentPage('seeker-applications');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNavigateSeekerProfile = () => {
+    window.history.pushState(null, '', '/seeker/profile');
+    setCurrentPage('seeker-profile');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNavigateSeekerSavedJobs = () => {
+    window.history.pushState(null, '', '/seeker/saved-jobs');
+    setCurrentPage('seeker-saved-jobs');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNavigateSeekerSettings = () => {
+    window.history.pushState(null, '', '/seeker/settings');
+    setCurrentPage('seeker-settings');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNavigateSeekerTab = (tabId) => {
+    if (tabId === 'dashboard') {
+      handleNavigateSeekerDashboard();
+    } else if (tabId === 'find-jobs' || tabId === 'jobs') {
+      handleNavigateSeekerJobs();
+    } else if (tabId === 'applications' || tabId === 'my-applications') {
+      handleNavigateSeekerApplications();
+    } else if (tabId === 'profile' || tabId === 'resume') {
+      handleNavigateSeekerProfile();
+    } else if (tabId === 'saved-jobs' || tabId === 'saved') {
+      handleNavigateSeekerSavedJobs();
+    } else if (tabId === 'settings') {
+      handleNavigateSeekerSettings();
+    } else {
+      alert(`Navigating to ${tabId} for Kavin Raj...`);
+    }
+  };
+
   const handleBackToHome = () => {
     window.history.pushState(null, '', '/');
     setCurrentPage('home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // If Job Seeker Settings is active
+  if (currentPage === 'seeker-settings') {
+    return (
+      <JobSeekerSettings
+        onLogout={handleNavigateAdmin}
+        onNavigateHome={handleBackToHome}
+        onNavigateTab={handleNavigateSeekerTab}
+      />
+    );
+  }
+
+  // If Job Seeker Saved Jobs is active
+  if (currentPage === 'seeker-saved-jobs') {
+    return (
+      <JobSeekerSavedJobs
+        onLogout={handleNavigateAdmin}
+        onNavigateHome={handleBackToHome}
+        onNavigateTab={handleNavigateSeekerTab}
+      />
+    );
+  }
+
+  // If Job Seeker Profile & Resume is active
+  if (currentPage === 'seeker-profile') {
+    return (
+      <JobSeekerProfile
+        onLogout={handleNavigateAdmin}
+        onNavigateHome={handleBackToHome}
+        onNavigateTab={handleNavigateSeekerTab}
+      />
+    );
+  }
+
+  // If Job Seeker Applications is active
+  if (currentPage === 'seeker-applications') {
+    return (
+      <JobSeekerApplications
+        onLogout={handleNavigateAdmin}
+        onNavigateHome={handleBackToHome}
+        onNavigateTab={handleNavigateSeekerTab}
+      />
+    );
+  }
+
+  // If Job Seeker Find Jobs is active
+  if (currentPage === 'seeker-jobs') {
+    return (
+      <JobSeekerFindJobs
+        onLogout={handleNavigateAdmin}
+        onNavigateHome={handleBackToHome}
+        onNavigateTab={handleNavigateSeekerTab}
+      />
+    );
+  }
+
+  // If Job Seeker Dashboard is active
+  if (currentPage === 'seeker-dashboard') {
+    return (
+      <JobSeekerDashboard
+        onLogout={handleNavigateAdmin}
+        onNavigateHome={handleBackToHome}
+        onNavigateTab={handleNavigateSeekerTab}
+      />
+    );
+  }
 
   // If Company Account Settings page is active
   if (currentPage === 'company-settings') {
@@ -438,6 +646,7 @@ function App() {
         onBackToHome={handleBackToHome}
         onLoginSuccess={handleNavigateAdminDashboard}
         onLoginCompanySuccess={handleNavigateCompanyDashboard}
+        onLoginSeekerSuccess={handleNavigateSeekerDashboard}
       />
     );
   }
@@ -492,6 +701,7 @@ function App() {
         initialMode={authMode}
         onNavigateCompany={handleNavigateCompanyDashboard}
         onNavigateAdmin={handleNavigateAdminDashboard}
+        onNavigateSeeker={handleNavigateSeekerDashboard}
       />
     </div>
   );

@@ -12,7 +12,8 @@ export default function AuthModal({
   onClose,
   initialMode = 'signin',
   onNavigateCompany,
-  onNavigateAdmin
+  onNavigateAdmin,
+  onNavigateSeeker
 }) {
   const [mode, setMode] = useState(initialMode); // 'signin' or 'signup'
   const [userRole, setUserRole] = useState('candidate'); // 'candidate' or 'employer'
@@ -75,9 +76,13 @@ export default function AuthModal({
       return;
     }
 
-    // Standard Candidate
-    alert(`${mode === 'signin' ? 'Signed in' : 'Account created'} successfully as Candidate! (Demo)`);
+    // Standard Candidate / Job Seeker
     onClose();
+    if (onNavigateSeeker) {
+      onNavigateSeeker();
+    } else {
+      alert(`${mode === 'signin' ? 'Signed in' : 'Account created'} successfully as Candidate! (Demo)`);
+    }
   };
 
   return (
