@@ -28,150 +28,44 @@ import {
 import AdminSidebar from './AdminSidebar';
 
 // Initial Companies Data matching the design screenshot
-const INITIAL_COMPANIES = [
-  {
-    id: 1,
-    name: 'ABC Industrial Services',
-    location: 'Thoothukudi, Tamil Nadu',
-    district: 'Thoothukudi',
-    industry: 'Industrial',
-    status: 'Pending',
-    statusLabel: 'Pending Verification',
-    jobsCount: 12,
-    applicationsCount: 48,
-    joinedDate: 'Oct 14, 2026',
-    companySize: '100 - 200 Employees',
-    email: 'hr@abcindustrial.in',
-    phone: '+91 98765 43210',
-    website: 'www.abcindustrial.in',
-    address: 'SIPCOT Industrial Estate, Thoothukudi, Tamil Nadu - 628 001',
-    about:
-      'ABC Industrial Services is a leading provider of industrial maintenance, electrical and mechanical solutions in Tamil Nadu.',
-    bannerImg: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=80',
-    logoType: 'text',
-    logoText: 'abc',
-    logoBg: 'bg-slate-900 text-white font-black tracking-tighter',
-  },
-  {
-    id: 2,
-    name: 'Bright Tech Solutions',
-    location: 'Chennai, Tamil Nadu',
-    district: 'Chennai',
-    industry: 'Technology',
-    status: 'Verified',
-    statusLabel: 'Verified Company',
-    jobsCount: 8,
-    applicationsCount: 64,
-    joinedDate: 'Oct 13, 2026',
-    companySize: '250 - 500 Employees',
-    email: 'contact@brighttech.io',
-    phone: '+91 94432 10987',
-    website: 'www.brighttech.io',
-    address: 'OMR IT Corridor, Taramani, Chennai, Tamil Nadu - 600 113',
-    about:
-      'Bright Tech Solutions delivers enterprise SaaS and mobile products for leading industrial and healthcare logistics firms.',
-    bannerImg: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&auto=format&fit=crop&q=80',
-    logoType: 'origami',
-    logoBg: 'bg-gradient-to-tr from-cyan-500 via-teal-400 to-indigo-500 text-white font-bold',
-    logoText: 'BT',
-  },
-  {
-    id: 3,
-    name: 'Solai Construction',
-    location: 'Tirunelveli, Tamil Nadu',
-    district: 'Tirunelveli',
-    industry: 'Construction',
-    status: 'Pending',
-    statusLabel: 'Pending Verification',
-    jobsCount: 5,
-    applicationsCount: 22,
-    joinedDate: 'Oct 12, 2026',
-    companySize: '50 - 100 Employees',
-    email: 'careers@solaiconstruction.com',
-    phone: '+91 91234 56780',
-    website: 'www.solaiconstruction.com',
-    address: 'Vannarpettai Main Road, Tirunelveli, Tamil Nadu - 627 003',
-    about:
-      'Solai Construction specializes in commercial infrastructure, turnkey civil contracts, and pre-engineered factory construction.',
-    bannerImg: 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f8?w=800&auto=format&fit=crop&q=80',
-    logoType: 'triangle',
-    logoBg: 'bg-rose-50 text-rose-700 font-extrabold border border-rose-200',
-    logoText: '▲',
-  },
-  {
-    id: 4,
-    name: 'Tamil Skills Academy',
-    location: 'Madurai, Tamil Nadu',
-    district: 'Madurai',
-    industry: 'Education',
-    status: 'Verified',
-    statusLabel: 'Verified Company',
-    jobsCount: 3,
-    applicationsCount: 18,
-    joinedDate: 'Oct 11, 2026',
-    companySize: '20 - 50 Employees',
-    email: 'admin@tamilskills.edu.in',
-    phone: '+91 98421 90123',
-    website: 'www.tamilskills.edu.in',
-    address: 'KK Nagar, Madurai, Tamil Nadu - 625 020',
-    about:
-      'Vocational training institute providing skilled trades, mechanical and automation certifications across Southern Tamil Nadu.',
-    bannerImg: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop&q=80',
-    logoType: 'shield',
-    logoBg: 'bg-amber-50 text-amber-700 font-black border border-amber-200',
-    logoText: 'TSA',
-  },
-  {
-    id: 5,
-    name: 'Healthy Care Hospital',
-    location: 'Coimbatore, Tamil Nadu',
-    district: 'Coimbatore',
-    industry: 'Healthcare',
-    status: 'Pending',
-    statusLabel: 'Pending Verification',
-    jobsCount: 7,
-    applicationsCount: 35,
-    joinedDate: 'Oct 10, 2026',
-    companySize: '500+ Employees',
-    email: 'recruitment@healthycare.org',
-    phone: '+91 97890 12345',
-    website: 'www.healthycare.org',
-    address: 'Avinashi Road, Peelamedu, Coimbatore, Tamil Nadu - 641 004',
-    about:
-      'Premier multi-specialty healthcare tertiary center with 350-bed inpatient capacity and trauma facilities.',
-    bannerImg: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&auto=format&fit=crop&q=80',
-    logoType: 'cross',
-    logoBg: 'bg-sky-500 text-white font-black',
-    logoText: '✚',
-  },
-  {
-    id: 6,
-    name: 'Greenfield Enterprises',
-    location: 'Erode, Tamil Nadu',
-    district: 'Erode',
-    industry: 'Industrial',
-    status: 'Rejected',
-    statusLabel: 'Rejected / Suspended',
-    jobsCount: 4,
-    applicationsCount: 11,
-    joinedDate: 'Oct 09, 2026',
-    companySize: '50 - 100 Employees',
-    email: 'info@greenfieldent.com',
-    phone: '+91 94862 33445',
-    website: 'www.greenfieldent.com',
-    address: 'Perundurai Industrial Growth Centre, Erode, Tamil Nadu - 638 052',
-    about:
-      'Agro-processing and textile machinery supplier operating in Western Tamil Nadu corridor.',
-    bannerImg: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&auto=format&fit=crop&q=80',
-    logoType: 'tree',
-    logoBg: 'bg-emerald-600 text-white font-black',
-    logoText: 'GE',
-  },
-];
+const INITIAL_COMPANIES = [];
 
 export default function AdminCompanies({ onLogout, onNavigateHome, onNavigateTab }) {
   const [companies, setCompanies] = useState(INITIAL_COMPANIES);
-  const [selectedCompany, setSelectedCompany] = useState(INITIAL_COMPANIES[0]);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+
+  React.useEffect(() => {
+    fetch('http://127.0.0.1:8000/api/admin/companies')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.data) {
+          const mapped = data.data.map(c => ({
+            id: c.id,
+            name: c.company_name,
+            location: c.location || (c.district ? `${c.district.name}, Tamil Nadu` : 'Tamil Nadu'),
+            district: c.district?.name || 'Thoothukudi',
+            industry: c.industry || 'Industrial Manufacturing',
+            status: c.verification_status === 'verified' ? 'Verified' : (c.verification_status === 'rejected' ? 'Rejected' : 'Pending'),
+            statusLabel: c.verification_status === 'verified' ? 'Verified Company' : 'Pending Verification',
+            jobsCount: c.job_listings_count || 0,
+            applicationsCount: 0,
+            joinedDate: new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            companySize: c.company_size || '50 - 100 Employees',
+            email: c.email || c.user?.email || 'contact@company.com',
+            phone: c.phone || c.user?.phone || '+91 98765 43210',
+            website: c.website || 'www.company.in',
+            address: c.location || 'SIPCOT Industrial Estate, Tamil Nadu',
+            about: c.about || 'Registered employer on Stark Jobs platform.',
+            logoType: 'text',
+            logoText: (c.company_name || 'CO').slice(0, 2).toUpperCase(),
+            logoBg: 'bg-slate-900 text-white font-black',
+          }));
+          setCompanies(mapped);
+          if (mapped.length > 0) setSelectedCompany(mapped[0]);
+        }
+      })
+      .catch(err => console.warn('Could not fetch admin companies:', err));
+  }, []);
   const [showDetailPanel, setShowDetailPanel] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [detailTab, setDetailTab] = useState('Overview');

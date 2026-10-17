@@ -64,204 +64,50 @@ export default function JobSeekerFindJobs({
   };
 
   // Comprehensive Dataset matching the screenshot exactly
-  const initialJobs = [
-    {
-      id: 'job-1',
-      title: 'Electrical Maintenance Technician',
-      company: 'South Coast Industries',
-      industry: 'Industrial Manufacturing',
-      location: 'Thoothukudi, TN',
-      fullLocation: 'Thoothukudi, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 18,000 – 25,000',
-      salaryMonthly: '₹ 18,000 – 25,000/month',
-      posted: '2 days ago',
-      category: 'Technical / Maintenance',
-      experience: '1 – 3 years',
-      logoType: 'text',
-      logoText: 'SCI',
-      logoBg: 'bg-[#0A192F]',
-      logoColor: 'text-white',
-      isSaved: false,
-      isApplied: false,
-      description:
-        'We are looking for an Electrical Maintenance Technician to handle routine maintenance, troubleshooting and repair of electrical systems and equipment in our production facility.',
-      responsibilities: [
-        'Perform preventive and corrective maintenance',
-        'Troubleshoot electrical faults in machines and panels',
-        'Ensure safety and compliance standards',
-        'Work with the maintenance team'
-      ],
-      requirements: [
-        'ITI / Diploma in Electrical or related field',
-        '1–3 years of relevant experience',
-        'Knowledge of basic electrical systems and safety procedures'
-      ]
-    },
-    {
-      id: 'job-2',
-      title: 'Junior Flutter Developer',
-      company: 'BlueKite Software',
-      industry: 'Software & Technology',
-      location: 'Tirunelveli, TN',
-      fullLocation: 'Tirunelveli, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 15,000 – 22,000',
-      salaryMonthly: '₹ 15,000 – 22,000/month',
-      posted: '3 days ago',
-      category: 'IT / Software',
-      experience: '0 – 2 years',
-      logoType: 'text',
-      logoText: 'BK',
-      logoBg: 'bg-[#0080FF]',
-      logoColor: 'text-white',
-      isSaved: false,
-      isApplied: false,
-      description:
-        'BlueKite Software is looking for a passionate Junior Flutter Developer to build cross-platform mobile applications for logistics and retail clients.',
-      responsibilities: [
-        'Develop and maintain clean Flutter & Dart codebases',
-        'Integrate REST APIs and cloud state managers',
-        'Collaborate with UI/UX designers to implement pixel-perfect screens',
-        'Publish builds to Play Store and App Store'
-      ],
-      requirements: [
-        'B.E / B.Tech / BCA or MCA in Computer Science or related degree',
-        'Familiarity with Dart, State Management (Provider/Bloc), and Git',
-        'Good problem-solving and communication skills'
-      ]
-    },
-    {
-      id: 'job-3',
-      title: 'Mathematics Teacher',
-      company: 'Bright Future Academy',
-      industry: 'Education & Academics',
-      location: 'Thoothukudi, TN',
-      fullLocation: 'Thoothukudi, Tamil Nadu',
-      type: 'Full-time',
-      salary: 'Salary not disclosed',
-      salaryMonthly: 'Competitive / Based on experience',
-      posted: '4 days ago',
-      category: 'Education & Teaching',
-      experience: '2+ years',
-      logoType: 'icon-book',
-      logoBg: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-      isSaved: false,
-      isApplied: false,
-      description:
-        'Bright Future Academy invites enthusiastic and qualified teachers to teach high school mathematics, inspire logical thinking, and prepare students for competitive exams.',
-      responsibilities: [
-        'Conduct engaging mathematics lectures for 9th to 12th standard',
-        'Prepare lesson plans, tests, and periodic student progress reports',
-        'Offer remedial sessions for students requiring academic support',
-        'Participate in parent-teacher meetings and institutional workshops'
-      ],
-      requirements: [
-        'B.Sc / M.Sc in Mathematics with B.Ed qualification',
-        '2+ years teaching experience in CBSE / State board',
-        'Patience, structured pedagogy, and strong communication'
-      ]
-    },
-    {
-      id: 'job-4',
-      title: 'Sales Executive',
-      company: 'Vetri Agencies',
-      industry: 'Wholesale & Distribution',
-      location: 'Thoothukudi, TN',
-      fullLocation: 'Thoothukudi, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 12,000 – 18,000',
-      salaryMonthly: '₹ 12,000 – 18,000/month',
-      posted: '5 days ago',
-      category: 'Sales & Marketing',
-      experience: '1 – 2 years',
-      logoType: 'swirl',
-      logoBg: 'bg-rose-50 text-rose-600 border border-rose-200',
-      isSaved: false,
-      isApplied: false,
-      description:
-        'Vetri Agencies seeks an active field Sales Executive to expand retail merchant accounts and distributor relationships across the southern districts.',
-      responsibilities: [
-        'Visit retail shops and commercial stores to pitch new product catalogs',
-        'Collect orders, manage invoice follow-ups, and hit quarterly sales targets',
-        'Coordinate with warehouse dispatch for timely shipments',
-        'Submit daily field visit summaries and merchant feedback'
-      ],
-      requirements: [
-        'Higher Secondary or Any Bachelor’s Degree',
-        'Valid two-wheeler license and familiarity with local retail routes',
-        'Persuasive negotiation and interpersonal skills'
-      ]
-    },
-    {
-      id: 'job-5',
-      title: 'Account Assistant',
-      company: 'Harini Traders',
-      industry: 'Accounting & Commerce',
-      location: 'Tirunelveli, TN',
-      fullLocation: 'Tirunelveli, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 14,000 – 20,000',
-      salaryMonthly: '₹ 14,000 – 20,000/month',
-      posted: '1 week ago',
-      category: 'Finance & Accounts',
-      experience: '1 – 3 years',
-      logoType: 'text',
-      logoText: 'HT',
-      logoBg: 'bg-[#7C3AED]',
-      logoColor: 'text-white',
-      isSaved: false,
-      isApplied: false,
-      description:
-        'Harini Traders is hiring an Account Assistant to oversee tally entries, purchase records, vendor reconciliations, and GST invoicing.',
-      responsibilities: [
-        'Record day-to-day financial transactions in Tally Prime',
-        'Verify vendor bills, purchase orders, and payment receipts',
-        'Assist chief accountant with monthly GST filing reconciliations',
-        'Maintain petty cash ledgers and physical voucher archives'
-      ],
-      requirements: [
-        'B.Com or M.Com degree holder',
-        'Proficiency with Tally Prime, MS Excel, and GST basics',
-        'Attention to detail and high accuracy'
-      ]
-    },
-    {
-      id: 'job-6',
-      title: 'HR Assistant',
-      company: 'SK Industries',
-      industry: 'Industrial & Manufacturing',
-      location: 'Thoothukudi, TN',
-      fullLocation: 'Thoothukudi, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 16,000 – 24,000',
-      salaryMonthly: '₹ 16,000 – 24,000/month',
-      posted: '1 week ago',
-      category: 'Human Resources',
-      experience: '1 – 3 years',
-      logoType: 'text',
-      logoText: 'SK',
-      logoBg: 'bg-[#0D9488]',
-      logoColor: 'text-white',
-      isSaved: false,
-      isApplied: false,
-      description:
-        'SK Industries is searching for an energetic HR Assistant to assist with factory workforce attendance, candidate onboarding, and statutory employee records.',
-      responsibilities: [
-        'Track daily biometric attendance and overtime calculations for plant staff',
-        'Coordinate candidate interview schedules and initial document verification',
-        'Maintain employee personal files, ESI, and PF records',
-        'Handle staff grievances and arrange worker training workshops'
-      ],
-      requirements: [
-        'BBA / MBA / MSW in Human Resources',
-        '1+ years experience in factory or corporate HR administration',
-        'Fluency in Tamil and English with good organizational aptitude'
-      ]
-    }
-  ];
+  const initialJobs = [];
 
   const [jobsList, setJobsList] = useState(initialJobs);
+
+  React.useEffect(() => {
+    fetch('http://127.0.0.1:8000/api/jobs')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.data) {
+          const mapped = data.data.map(j => ({
+            id: `job-${j.id}`,
+            title: j.title,
+            company: j.company?.company_name || 'Direct Employer',
+            companyInitial: (j.company?.company_name || 'DE').slice(0, 2).toUpperCase(),
+            logoType: 'text',
+            logoBg: 'bg-blue-600',
+            logoColor: 'text-white',
+            logoText: (j.company?.company_name || 'DE').slice(0, 2).toUpperCase(),
+            companyColor: 'bg-blue-600 text-white',
+            industry: j.company?.industry || 'Industrial Manufacturing',
+            location: j.location || (j.district ? `${j.district.name}, TN` : 'Tamil Nadu'),
+            fullLocation: j.location || (j.district ? `${j.district.name}, Tamil Nadu` : 'Tamil Nadu'),
+            jobType: j.job_type || 'Full-time',
+            category: j.category?.name || 'General',
+            experience: j.experience || '1 - 3 Years',
+            salary: j.min_salary && j.max_salary ? `₹ ${Number(j.min_salary).toLocaleString()} – ${Number(j.max_salary).toLocaleString()}/month` : 'Best in Industry',
+            postedTime: 'Recently',
+            isSaved: false,
+            description: j.description || '',
+            responsibilities: j.responsibilities || [
+              'Perform assigned operational duties according to specifications.',
+              'Adhere to factory safety protocols and maintenance standards.'
+            ],
+            requirements: j.requirements || [
+              'Relevant trade qualification or experience.',
+              'Good technical understanding and problem solving ability.'
+            ],
+          }));
+          setJobsList(mapped);
+          if (mapped.length > 0) setSelectedJobId(mapped[0].id);
+        }
+      })
+      .catch(err => console.warn('Could not fetch find jobs:', err));
+  }, []);
 
   // Selected Job for Right Pane (defaults to first job: Electrical Maintenance Technician)
   const [selectedJobId, setSelectedJobId] = useState('job-1');
@@ -952,6 +798,14 @@ export default function JobSeekerFindJobs({
 
             {/* Right Column: Detailed Job Preview Pane (5 Cols) */}
             <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 shadow-xs p-6 space-y-6 sticky top-20">
+              {!activeJob ? (
+                <div className="text-center py-20 text-slate-400">
+                  <Briefcase className="w-12 h-12 mx-auto mb-3 text-slate-300 stroke-1" />
+                  <p className="font-semibold text-slate-600 text-sm">No Job Selected</p>
+                  <p className="text-xs text-slate-400 mt-1">Select a job from the left or create a new job to view full details.</p>
+                </div>
+              ) : (
+                <>
               {/* Top Company & Actions */}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3.5">
@@ -1125,6 +979,8 @@ export default function JobSeekerFindJobs({
                   <p className="text-xs font-bold text-slate-900">{activeJob.experience}</p>
                 </div>
               </div>
+                </>
+              )}
             </div>
           </div>
         </main>

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import {
   Search,
   Calendar,
@@ -21,8 +22,8 @@ const STATS_DATA = [
   {
     id: 'job-seekers',
     label: 'Job Seekers',
-    value: '2,845',
-    trend: '+12%',
+    value: '0',
+    trend: '0%',
     trendText: 'vs last month',
     icon: Users,
     iconColor: 'text-[#2563EB]',
@@ -31,8 +32,8 @@ const STATS_DATA = [
   {
     id: 'companies',
     label: 'Companies',
-    value: '326',
-    trend: '+8%',
+    value: '0',
+    trend: '0%',
     trendText: 'vs last month',
     icon: Building2,
     iconColor: 'text-[#0F8B8D]',
@@ -41,8 +42,8 @@ const STATS_DATA = [
   {
     id: 'active-jobs',
     label: 'Active Jobs',
-    value: '1,128',
-    trend: '+18%',
+    value: '0',
+    trend: '0%',
     trendText: 'vs last month',
     icon: Briefcase,
     iconColor: 'text-[#7C3AED]',
@@ -51,8 +52,8 @@ const STATS_DATA = [
   {
     id: 'total-applications',
     label: 'Total Applications',
-    value: '5,642',
-    trend: '+24%',
+    value: '0',
+    trend: '0%',
     trendText: 'vs last month',
     icon: FileText,
     iconColor: 'text-[#EA580C]',
@@ -61,116 +62,23 @@ const STATS_DATA = [
 ];
 
 const REGISTRATION_CHART_DATA = [
-  { month: 'Jan', seekers: 110, companies: 30 },
-  { month: 'Feb', seekers: 155, companies: 65 },
-  { month: 'Mar', seekers: 205, companies: 45 },
-  { month: 'Apr', seekers: 145, companies: 80 },
-  { month: 'May', seekers: 215, companies: 125 },
-  { month: 'Jun', seekers: 175, companies: 95 },
-  { month: 'Jul', seekers: 220, companies: 135 },
-  { month: 'Aug', seekers: 265, companies: 155 },
-  { month: 'Sep', seekers: 290, companies: 195 },
-  { month: 'Oct', seekers: 345, companies: 215 },
+  { month: 'Jan', seekers: 0, companies: 0 },
+  { month: 'Feb', seekers: 0, companies: 0 },
+  { month: 'Mar', seekers: 0, companies: 0 },
+  { month: 'Apr', seekers: 0, companies: 0 },
+  { month: 'May', seekers: 0, companies: 0 },
+  { month: 'Jun', seekers: 0, companies: 0 },
+  { month: 'Jul', seekers: 0, companies: 0 },
+  { month: 'Aug', seekers: 0, companies: 0 },
+  { month: 'Sep', seekers: 0, companies: 0 },
+  { month: 'Oct', seekers: 0, companies: 0 },
 ];
 
-const TOP_DISTRICTS_DATA = [
-  { rank: 1, name: 'Thoothukudi', count: 280, percentage: 93 },
-  { rank: 2, name: 'Coimbatore', count: 180, percentage: 60 },
-  { rank: 3, name: 'Chennai', count: 150, percentage: 50 },
-  { rank: 4, name: 'Madurai', count: 120, percentage: 40 },
-  { rank: 5, name: 'Tirunelveli', count: 95, percentage: 32 },
-];
+const TOP_DISTRICTS_DATA = [];
 
-const RECENT_COMPANIES_DATA = [
-  {
-    id: 1,
-    name: 'ABC Industrial Services',
-    district: 'Thoothukudi',
-    registeredOn: 'Oct 14, 2026',
-    status: 'Pending',
-    initial: 'A',
-    bgColor: 'bg-slate-900 text-white',
-  },
-  {
-    id: 2,
-    name: 'Bright Tech Solutions',
-    district: 'Chennai',
-    registeredOn: 'Oct 13, 2026',
-    status: 'Verified',
-    initial: 'B',
-    bgColor: 'bg-teal-600 text-white',
-  },
-  {
-    id: 3,
-    name: 'Solai Construction',
-    district: 'Tirunelveli',
-    registeredOn: 'Oct 12, 2026',
-    status: 'Pending',
-    initial: 'S',
-    bgColor: 'bg-amber-600 text-white',
-  },
-  {
-    id: 4,
-    name: 'Tamil Skills Academy',
-    district: 'Madurai',
-    registeredOn: 'Oct 11, 2026',
-    status: 'Verified',
-    initial: 'T',
-    bgColor: 'bg-blue-600 text-white',
-  },
-  {
-    id: 5,
-    name: 'Healthy Care Hospital',
-    district: 'Coimbatore',
-    registeredOn: 'Oct 10, 2026',
-    status: 'Pending',
-    initial: 'H',
-    bgColor: 'bg-sky-500 text-white',
-  },
-];
+const RECENT_COMPANIES_DATA = [];
 
-const RECENT_JOBS_DATA = [
-  {
-    id: 1,
-    title: 'Electrician',
-    company: 'ABC Industrial...',
-    district: 'Thoothukudi',
-    postedOn: 'Oct 14, 2026',
-    status: 'Active',
-  },
-  {
-    id: 2,
-    title: 'Flutter Developer',
-    company: 'Bright Tech...',
-    district: 'Chennai',
-    postedOn: 'Oct 13, 2026',
-    status: 'Active',
-  },
-  {
-    id: 3,
-    title: 'Site Supervisor',
-    company: 'Solai Construction',
-    district: 'Tirunelveli',
-    postedOn: 'Oct 12, 2026',
-    status: 'Under Review',
-  },
-  {
-    id: 4,
-    title: 'Accountant',
-    company: 'Lakshmi Traders',
-    district: 'Madurai',
-    postedOn: 'Oct 11, 2026',
-    status: 'Active',
-  },
-  {
-    id: 5,
-    title: 'Nurse',
-    company: 'Healthy Care Ho...',
-    district: 'Coimbatore',
-    postedOn: 'Oct 10, 2026',
-    status: 'Closed',
-  },
-];
+const RECENT_JOBS_DATA = [];
 
 /**
  * Super Admin Dashboard Page (Single-File Page Implementation)
@@ -179,6 +87,28 @@ const RECENT_JOBS_DATA = [
 export default function AdminDashboard({ onLogout, onNavigateHome, onNavigateTab }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [statsData, setStatsData] = useState(STATS_DATA);
+  const [recentCompanies, setRecentCompanies] = useState([]);
+  const [recentJobs, setRecentJobs] = useState([]);
+
+  useEffect(() => {
+    api.getAdminStats()
+      .then(res => {
+        if (res && res.stats) {
+          setStatsData([
+            { ...STATS_DATA[0], value: String(res.stats.total_seekers || 0) },
+            { ...STATS_DATA[1], value: String(res.stats.total_companies || 0) },
+            { ...STATS_DATA[2], value: String(res.stats.active_jobs || 0) },
+            { ...STATS_DATA[3], value: String(res.stats.total_applications || 0) },
+          ]);
+          setRecentCompanies(res.recent_companies || []);
+          setRecentJobs(res.recent_applications || []);
+        }
+      })
+      .catch(err => {
+        console.warn('Live admin stats not yet connected:', err.message);
+      });
+  }, []);
 
   // Top header states
   const [searchQuery, setSearchQuery] = useState('');
@@ -404,7 +334,7 @@ export default function AdminDashboard({ onLogout, onNavigateHome, onNavigateTab
           {/* ROW 1: 4 STAT METRIC CARDS                                     */}
           {/* ============================================================== */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {STATS_DATA.map((item) => {
+            {statsData.map((item) => {
               const Icon = item.icon;
               return (
                 <div
@@ -662,25 +592,22 @@ export default function AdminDashboard({ onLogout, onNavigateHome, onNavigateTab
               </div>
 
               <div className="space-y-4 my-auto">
-                {TOP_DISTRICTS_DATA.map((item) => (
-                  <div key={item.rank} className="flex items-center justify-between gap-3 text-sm group">
-                    <span className="w-5 text-slate-400 font-medium text-xs text-center">
-                      {item.rank}
-                    </span>
-                    <span className="w-28 font-medium text-slate-700 text-sm truncate group-hover:text-blue-600 transition-colors">
-                      {item.name}
-                    </span>
-                    <div className="flex-1 bg-slate-100 h-2.5 rounded-full overflow-hidden mx-2">
-                      <div
-                        className="bg-blue-600 h-full rounded-full transition-all duration-700 ease-out"
-                        style={{ width: `${item.percentage}%` }}
-                      />
-                    </div>
-                    <span className="w-10 text-right font-semibold text-slate-700 text-sm">
-                      {item.count}
-                    </span>
+                {TOP_DISTRICTS_DATA.length === 0 ? (
+                  <div className="text-center py-8 text-slate-400 text-xs">
+                    No active district job data yet.
                   </div>
-                ))}
+                ) : (
+                  TOP_DISTRICTS_DATA.map((item) => (
+                    <div key={item.rank} className="flex items-center justify-between gap-3 text-sm group">
+                      <span className="w-5 text-slate-400 font-medium text-xs text-center">{item.rank}</span>
+                      <span className="w-28 font-medium text-slate-700 text-sm truncate group-hover:text-blue-600 transition-colors">{item.name}</span>
+                      <div className="flex-1 bg-slate-100 h-2.5 rounded-full overflow-hidden mx-2">
+                        <div className="bg-blue-600 h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${item.percentage}%` }} />
+                      </div>
+                      <span className="w-10 text-right font-semibold text-slate-700 text-sm">{item.count}</span>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -715,7 +642,14 @@ export default function AdminDashboard({ onLogout, onNavigateHome, onNavigateTab
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {RECENT_COMPANIES_DATA.map((company) => (
+                    {recentCompanies.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="py-8 text-center text-xs text-slate-400">
+                          No companies registered yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      recentCompanies.map((company) => (
                       <tr key={company.id} className="hover:bg-slate-50/70 transition-colors group">
                         <td className="py-3 pr-2">
                           <div className="flex items-center gap-3">
@@ -776,7 +710,7 @@ export default function AdminDashboard({ onLogout, onNavigateHome, onNavigateTab
                           )}
                         </td>
                       </tr>
-                    ))}
+                    )))}
                   </tbody>
                 </table>
               </div>
@@ -806,7 +740,14 @@ export default function AdminDashboard({ onLogout, onNavigateHome, onNavigateTab
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {RECENT_JOBS_DATA.map((job) => (
+                    {recentJobs.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="py-8 text-center text-xs text-slate-400">
+                          No recent job applications yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      recentJobs.map((job) => (
                       <tr key={job.id} className="hover:bg-slate-50/70 transition-colors group">
                         <td className="py-3 pr-2">
                           <span className="font-semibold text-slate-800 text-sm group-hover:text-blue-600 transition-colors block">
@@ -832,7 +773,7 @@ export default function AdminDashboard({ onLogout, onNavigateHome, onNavigateTab
                           </span>
                         </td>
                       </tr>
-                    ))}
+                    )))}
                   </tbody>
                 </table>
               </div>

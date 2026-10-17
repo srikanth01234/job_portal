@@ -26,148 +26,40 @@ import {
 import AdminSidebar from './AdminSidebar';
 
 // Initial candidates list from reference screenshot
-const INITIAL_CANDIDATES = [
-  {
-    id: 1,
-    name: 'Arun Kumar',
-    email: 'arun.kumar@gmail.com',
-    phone: '+91 98765 43210',
-    district: 'Thoothukudi',
-    state: 'Tamil Nadu',
-    qualification: 'B.E. (CSE)',
-    experience: '2 Years',
-    status: 'Active',
-    registeredOn: 'Oct 14, 2026',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    initials: 'AK',
-    skills: ['React', 'Node.js', 'JavaScript', 'Tailwind CSS', 'Git'],
-    preferredLocation: 'Thoothukudi',
-    bio: 'Full stack developer with 2+ years of experience building modern web applications.',
-  },
-  {
-    id: 2,
-    name: 'Priya R',
-    email: 'priya@gmail.com',
-    phone: '+91 91234 56789',
-    district: 'Tirunelveli',
-    state: 'Tamil Nadu',
-    qualification: 'B.Tech (IT)',
-    experience: '1 Year',
-    status: 'Active',
-    registeredOn: 'Oct 13, 2026',
-    avatar: null,
-    initials: 'PR',
-    skills: ['Python', 'Django', 'SQL', 'REST APIs'],
-    preferredLocation: 'Tirunelveli',
-    bio: 'Software engineer focused on backend systems and clean database architecture.',
-  },
-  {
-    id: 3,
-    name: 'Suresh M',
-    email: 'suresh@email.com',
-    phone: '+91 90456 78912',
-    district: 'Madurai',
-    state: 'Tamil Nadu',
-    qualification: 'ITI (Electrician)',
-    experience: '5 Years',
-    status: 'Active',
-    registeredOn: 'Oct 12, 2026',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    initials: 'SM',
-    skills: ['Wiring', 'Industrial Panels', 'Circuit Design', 'Safety Protocols'],
-    preferredLocation: 'Madurai',
-    bio: 'Certified electrical technician with heavy industrial installation background.',
-  },
-  {
-    id: 4,
-    name: 'Karthik Raja',
-    email: 'karthik@gmail.com',
-    phone: '+91 93456 12345',
-    district: 'Chennai',
-    state: 'Tamil Nadu',
-    qualification: 'Diploma (Mech)',
-    experience: '3 Years',
-    status: 'Inactive',
-    registeredOn: 'Oct 11, 2026',
-    avatar: null,
-    initials: 'KR',
-    skills: ['AutoCAD', 'CNC Operating', 'Quality Check', 'Lathe Machine'],
-    preferredLocation: 'Chennai',
-    bio: 'Mechanical technician specialized in precision tooling and automated machinery.',
-  },
-  {
-    id: 5,
-    name: 'Meena Lakshmi',
-    email: 'meena@email.com',
-    phone: '+91 97865 43210',
-    district: 'Coimbatore',
-    state: 'Tamil Nadu',
-    qualification: 'B.Sc (Nursing)',
-    experience: '1 Year',
-    status: 'Active',
-    registeredOn: 'Oct 10, 2026',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-    initials: 'ML',
-    skills: ['Patient Care', 'Emergency Response', 'ICU Assisting', 'Pharmacology'],
-    preferredLocation: 'Coimbatore',
-    bio: 'Compassionate licensed healthcare practitioner with clinical rotation experience.',
-  },
-  {
-    id: 6,
-    name: 'Dinesh V',
-    email: 'dinesh@gmail.com',
-    phone: '+91 90012 34567',
-    district: 'Thoothukudi',
-    state: 'Tamil Nadu',
-    qualification: '12th',
-    experience: 'Fresher',
-    status: 'Active',
-    registeredOn: 'Oct 10, 2026',
-    avatar: null,
-    initials: 'DV',
-    skills: ['Data Entry', 'MS Office', 'Warehouse Inventory', 'Logistics'],
-    preferredLocation: 'Thoothukudi',
-    bio: 'Motivated entry-level applicant eager to excel in logistics and clerical duties.',
-  },
-  {
-    id: 7,
-    name: 'Ravi Prakash',
-    email: 'ravi@email.com',
-    phone: '+91 93478 90123',
-    district: 'Tiruchirappalli',
-    state: 'Tamil Nadu',
-    qualification: 'B.Com',
-    experience: '2 Years',
-    status: 'Suspended',
-    registeredOn: 'Oct 09, 2026',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    initials: 'RP',
-    skills: ['Tally Prime', 'GST Filing', 'Bookkeeping', 'Tax Audits'],
-    preferredLocation: 'Tiruchirappalli',
-    bio: 'Accountant with commercial accounting, accounts receivable, and payroll expertise.',
-  },
-  {
-    id: 8,
-    name: 'Sneha J',
-    email: 'sneha@gmail.com',
-    phone: '+91 91234 78901',
-    district: 'Madurai',
-    state: 'Tamil Nadu',
-    qualification: 'M.A. (English)',
-    experience: 'Fresher',
-    status: 'Active',
-    registeredOn: 'Oct 08, 2026',
-    avatar: null,
-    initials: 'SJ',
-    skills: ['Content Writing', 'Copywriting', 'SEO', 'Communication'],
-    preferredLocation: 'Madurai',
-    bio: 'Creative writer proficient in corporate branding, articles, and English linguistics.',
-  },
-];
+const INITIAL_CANDIDATES = [];
 
 export default function AdminJobSeekers({ onLogout, onNavigateHome, onNavigateTab }) {
   const [candidates, setCandidates] = useState(INITIAL_CANDIDATES);
-  const [selectedCandidate, setSelectedCandidate] = useState(INITIAL_CANDIDATES[0]);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+
+  React.useEffect(() => {
+    fetch('http://127.0.0.1:8000/api/admin/job-seekers')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.data) {
+          const mapped = data.data.map(s => ({
+            id: s.id,
+            name: s.name,
+            email: s.email,
+            phone: s.phone || 'N/A',
+            district: s.seeker_profile?.district?.name || 'Thoothukudi',
+            state: 'Tamil Nadu',
+            qualification: s.seeker_profile?.highest_qualification || 'Degree / Diploma',
+            experience: s.seeker_profile?.experience_years ? `${s.seeker_profile.experience_years} Years` : 'Fresher',
+            status: s.is_active ? 'Active' : 'Inactive',
+            registeredOn: new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            avatar: s.avatar || null,
+            initials: (s.name || 'JS').slice(0, 2).toUpperCase(),
+            skills: s.seeker_profile?.skills || ['Trade Knowledge'],
+            preferredLocation: s.seeker_profile?.preferred_location || 'Tamil Nadu',
+            bio: s.seeker_profile?.bio || 'Registered job candidate on Stark Jobs.',
+          }));
+          setCandidates(mapped);
+          if (mapped.length > 0) setSelectedCandidate(mapped[0]);
+        }
+      })
+      .catch(err => console.warn('Could not fetch seekers:', err));
+  }, []);
   const [selectedRows, setSelectedRows] = useState([1]);
   const [showDetailPanel, setShowDetailPanel] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -480,7 +372,7 @@ export default function AdminJobSeekers({ onLogout, onNavigateHome, onNavigateTa
               </div>
               <div>
                 <span className="text-xs font-semibold text-slate-500 block">Total Job Seekers</span>
-                <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">2,845</div>
+                <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">{candidates.length}</div>
                 <div className="flex items-center gap-1.5 mt-1.5 text-xs">
                   <span className="font-bold text-emerald-600">↗ +12%</span>
                   <span className="text-slate-400 font-medium text-[11px]">vs last month</span>
@@ -865,7 +757,7 @@ export default function AdminJobSeekers({ onLogout, onNavigateHome, onNavigateTa
 
               {/* Table Pagination Footer */}
               <div className="pt-4 mt-2 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-                <span>Showing 1 to {filteredCandidates.length} of 2,845 results</span>
+                <span>Showing 1 to {filteredCandidates.length} of {candidates.length} results</span>
                 
                 <div className="flex items-center gap-1">
                   <button className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 text-slate-600 cursor-pointer">
