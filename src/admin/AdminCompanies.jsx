@@ -56,7 +56,8 @@ export default function AdminCompanies({ onLogout, onNavigateHome, onNavigateTab
             website: c.website || 'www.company.in',
             address: c.location || 'SIPCOT Industrial Estate, Tamil Nadu',
             about: c.about || 'Registered employer on Stark Jobs platform.',
-            logoType: 'text',
+            logo: c.logo_url || (c.logo ? (c.logo.startsWith('http') ? c.logo : `http://127.0.0.1:8000/storage/${c.logo}`) : null),
+            logoType: c.logo_url || c.logo ? 'image' : 'text',
             logoText: (c.company_name || 'CO').slice(0, 2).toUpperCase(),
             logoBg: 'bg-slate-900 text-white font-black',
           }));
@@ -97,10 +98,10 @@ export default function AdminCompanies({ onLogout, onNavigateHome, onNavigateTab
   });
 
   // Dynamic status counts
-  const countAll = 326;
-  const countPending = 42;
-  const countVerified = 248;
-  const countRejected = 36;
+  const countAll = companies.length;
+  const countPending = companies.filter((c) => c.status === 'Pending').length;
+  const countVerified = companies.filter((c) => c.status === 'Verified').length;
+  const countRejected = companies.filter((c) => c.status === 'Rejected').length;
 
   // Filtered Companies
   const filteredCompanies = companies.filter((comp) => {
@@ -413,10 +414,19 @@ export default function AdminCompanies({ onLogout, onNavigateHome, onNavigateTab
                   <span>→</span>
                 </button>
                 <div className="flex items-center -space-x-1.5">
-                  <span className="w-6 h-6 rounded-full bg-slate-900 text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-white">tcs</span>
-                  <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-white">inf</span>
-                  <span className="w-6 h-6 rounded-full bg-teal-600 text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-white">wip</span>
-                  <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 text-[9px] font-bold flex items-center justify-center ring-2 ring-white">+120</span>
+                  {companies.slice(0, 3).map((comp, idx) => (
+                    <span
+                      key={comp.id || idx}
+                      className="w-6 h-6 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-white uppercase"
+                    >
+                      {comp.name ? comp.name.slice(0, 2) : 'CO'}
+                    </span>
+                  ))}
+                  {companies.length > 3 && (
+                    <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 text-[9px] font-bold flex items-center justify-center ring-2 ring-white">
+                      +{companies.length - 3}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -435,7 +445,9 @@ export default function AdminCompanies({ onLogout, onNavigateHome, onNavigateTab
                   <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-0.5">
                     {countVerified}
                   </div>
-                  <span className="text-xs font-medium text-slate-400 mt-1 block">76% of total</span>
+                  <span className="text-xs font-medium text-slate-400 mt-1 block">
+                    {countAll > 0 ? `${Math.round((countVerified / countAll) * 100)}% of total` : '0% of total'}
+                  </span>
                 </div>
               </div>
               <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />
@@ -644,9 +656,17 @@ export default function AdminCompanies({ onLogout, onNavigateHome, onNavigateTab
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-center gap-3">
                             {/* Logo */}
-                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xs flex-shrink-0 shadow-2xs ${company.logoBg}`}>
-                              {company.logoText}
-                            </div>
+                            {company.logo ? (
+                              <img
+                                src={company.logo}
+                                alt={company.name}
+                                className="w-11 h-11 rounded-xl object-contain bg-white p-1 border border-slate-200 flex-shrink-0 shadow-2xs"
+                              />
+                            ) : (
+                              <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xs flex-shrink-0 shadow-2xs ${company.logoBg}`}>
+                                {company.logoText}
+                              </div>
+                            )}
                             <div className="min-w-0">
                               <h3 className="font-extrabold text-slate-900 text-sm group-hover:text-blue-600 transition-colors truncate">
                                 {company.name}
@@ -803,9 +823,17 @@ export default function AdminCompanies({ onLogout, onNavigateHome, onNavigateTab
 
                   {/* Overlapping Logo */}
                   <div className="absolute -bottom-6 left-6">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-sm ring-4 ring-white shadow-md ${selectedCompany.logoBg}`}>
-                      {selectedCompany.logoText}
-                    </div>
+                    {selectedCompany.logo ? (
+                      <img
+                        src={selectedCompany.logo}
+                        alt={selectedCompany.name}
+                        className="w-16 h-16 rounded-2xl object-contain bg-white p-1 ring-4 ring-white shadow-md flex-shrink-0"
+                      />
+                    ) : (
+                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-sm ring-4 ring-white shadow-md ${selectedCompany.logoBg}`}>
+                        {selectedCompany.logoText}
+                      </div>
+                    )}
                   </div>
                 </div>
 

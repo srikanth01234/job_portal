@@ -4,17 +4,10 @@ import {
   Users,
   Building2,
   Briefcase,
-  FileCheck,
   MapPin,
-  Grid2X2,
-  BarChart3,
-  Settings,
-  Clock,
   LogOut,
   X,
-  ChevronDown,
-  Flag,
-  Shield
+  ChevronDown
 } from 'lucide-react';
 
 const NAV_GROUPS = [
@@ -30,24 +23,7 @@ const NAV_GROUPS = [
       { id: 'job-seekers', label: 'Job Seekers', icon: Users },
       { id: 'companies', label: 'Companies', icon: Building2 },
       { id: 'jobs', label: 'Job Listings', icon: Briefcase },
-      { id: 'applications', label: 'Applications', icon: FileCheck },
       { id: 'districts', label: 'Districts & Categories', icon: MapPin },
-      { id: 'categories', label: 'Job Categories', icon: Grid2X2 },
-    ],
-  },
-  {
-    title: 'MONITORING',
-    items: [
-      { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
-      { id: 'reported', label: 'Reported Jobs & Users', icon: Flag },
-    ],
-  },
-  {
-    title: 'CONFIGURATION',
-    items: [
-      { id: 'roles', label: 'Roles & Permissions', icon: Shield },
-      { id: 'settings', label: 'Settings', icon: Settings },
-      { id: 'logs', label: 'Activity Logs', icon: Clock },
     ],
   },
 ];

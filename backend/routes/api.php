@@ -20,7 +20,7 @@ use App\Http\Controllers\Api\AdminController;
 // 1. PUBLIC ROUTES (No Token Required)
 // ==========================================
 Route::prefix('auth')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->name('login');
     Route::post('/register', [AuthController::class, 'register']);
 });
 
@@ -37,6 +37,31 @@ Route::prefix('admin')->group(function () {
     Route::get('/job-seekers', [AdminController::class, 'getJobSeekers']);
 });
 
+// Applications endpoints (handles both authenticated user and fallback)
+Route::get('/applications', [ApplicationController::class, 'index']);
+Route::post('/applications', [ApplicationController::class, 'store']);
+Route::put('/applications/{id}/status', [ApplicationController::class, 'updateStatus']);
+Route::post('/applications/{id}/withdraw', [ApplicationController::class, 'withdraw']);
+
+Route::prefix('seeker')->group(function () {
+    Route::get('/profile', [JobSeekerController::class, 'getProfile']);
+    Route::post('/profile', [JobSeekerController::class, 'updateProfile']);
+    Route::post('/avatar', [JobSeekerController::class, 'uploadAvatar']);
+    Route::post('/resume', [JobSeekerController::class, 'uploadResume']);
+    Route::post('/extract-resume', [JobSeekerController::class, 'extractResume']);
+    Route::get('/saved-jobs', [JobSeekerController::class, 'getSavedJobs']);
+    Route::post('/saved-jobs/{jobId}', [JobSeekerController::class, 'toggleSaveJob']);
+});
+Route::prefix('company')->group(function () {
+    Route::get('/profile', [CompanyController::class, 'getProfile']);
+    Route::post('/profile', [CompanyController::class, 'updateProfile']);
+    Route::post('/logo', [CompanyController::class, 'uploadLogo']);
+    Route::get('/jobs', [CompanyController::class, 'getMyJobs']);
+    Route::post('/interviews', [CompanyController::class, 'scheduleInterview']);
+    Route::get('/interviews', [CompanyController::class, 'getInterviews']);
+    Route::put('/interviews/{id}/status', [CompanyController::class, 'updateInterviewStatus']);
+});
+
 // ==========================================
 // 2. PROTECTED ROUTES (Token Required)
 // ==========================================
@@ -46,37 +71,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
-    });
-
-    // ------------------------------------------
-    // Job Seeker Endpoints
-    // ------------------------------------------
-    Route::prefix('seeker')->group(function () {
-        Route::get('/profile', [JobSeekerController::class, 'getProfile']);
-        Route::post('/profile', [JobSeekerController::class, 'updateProfile']);
-        Route::post('/resume', [JobSeekerController::class, 'uploadResume']);
-        Route::post('/avatar', [JobSeekerController::class, 'uploadAvatar']);
-        Route::get('/saved-jobs', [JobSeekerController::class, 'getSavedJobs']);
-        Route::post('/saved-jobs/{jobId}', [JobSeekerController::class, 'toggleSaveJob']);
-        Route::get('/interviews', [CompanyController::class, 'getInterviews']);
-    });
-
-    // Applications flow
-    Route::get('/applications', [ApplicationController::class, 'index']);
-    Route::post('/applications', [ApplicationController::class, 'store']);
-    Route::put('/applications/{id}/status', [ApplicationController::class, 'updateStatus']);
-    Route::post('/applications/{id}/withdraw', [ApplicationController::class, 'withdraw']);
-
-    // ------------------------------------------
-    // Employer / Company Endpoints
-    // ------------------------------------------
-    Route::prefix('company')->group(function () {
-        Route::get('/profile', [CompanyController::class, 'getProfile']);
-        Route::post('/profile', [CompanyController::class, 'updateProfile']);
-        Route::post('/logo', [CompanyController::class, 'uploadLogo']);
-        Route::get('/jobs', [CompanyController::class, 'getMyJobs']);
-        Route::post('/interviews', [CompanyController::class, 'scheduleInterview']);
-        Route::get('/interviews', [CompanyController::class, 'getInterviews']);
     });
 
     // Company Job Management

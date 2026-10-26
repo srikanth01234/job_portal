@@ -19,6 +19,16 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
+    protected $appends = ['avatar_url'];
+
+    public function getAvatarUrlAttribute()
+    {
+        if (!$this->avatar) {
+            return null;
+        }
+        return str_starts_with($this->avatar, 'http') ? $this->avatar : asset('storage/' . $this->avatar);
+    }
+
     /**
      * Get the attributes that should be cast.
      *

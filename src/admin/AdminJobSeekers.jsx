@@ -48,7 +48,7 @@ export default function AdminJobSeekers({ onLogout, onNavigateHome, onNavigateTa
             experience: s.seeker_profile?.experience_years ? `${s.seeker_profile.experience_years} Years` : 'Fresher',
             status: s.is_active ? 'Active' : 'Inactive',
             registeredOn: new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-            avatar: s.avatar || null,
+            avatar: s.avatar_url || (s.avatar ? (s.avatar.startsWith('http') ? s.avatar : `http://127.0.0.1:8000/storage/${s.avatar}`) : null),
             initials: (s.name || 'JS').slice(0, 2).toUpperCase(),
             skills: s.seeker_profile?.skills || ['Trade Knowledge'],
             preferredLocation: s.seeker_profile?.preferred_location || 'Tamil Nadu',
@@ -374,8 +374,8 @@ export default function AdminJobSeekers({ onLogout, onNavigateHome, onNavigateTa
                 <span className="text-xs font-semibold text-slate-500 block">Total Job Seekers</span>
                 <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">{candidates.length}</div>
                 <div className="flex items-center gap-1.5 mt-1.5 text-xs">
-                  <span className="font-bold text-emerald-600">↗ +12%</span>
-                  <span className="text-slate-400 font-medium text-[11px]">vs last month</span>
+                  <span className="font-bold text-emerald-600">Live</span>
+                  <span className="text-slate-400 font-medium text-[11px]">registered users</span>
                 </div>
               </div>
             </div>
@@ -387,10 +387,14 @@ export default function AdminJobSeekers({ onLogout, onNavigateHome, onNavigateTa
               </div>
               <div>
                 <span className="text-xs font-semibold text-slate-500 block">Active Job Seekers</span>
-                <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">2,310</div>
+                <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+                  {candidates.filter((c) => c.status === 'Active').length}
+                </div>
                 <div className="flex items-center gap-1.5 mt-1.5 text-xs">
-                  <span className="font-bold text-emerald-600">↗ +8%</span>
-                  <span className="text-slate-400 font-medium text-[11px]">vs last month</span>
+                  <span className="font-bold text-emerald-600">
+                    {candidates.length > 0 ? `${Math.round((candidates.filter((c) => c.status === 'Active').length / candidates.length) * 100)}%` : '100%'}
+                  </span>
+                  <span className="text-slate-400 font-medium text-[11px]">of total seekers</span>
                 </div>
               </div>
             </div>
@@ -402,10 +406,12 @@ export default function AdminJobSeekers({ onLogout, onNavigateHome, onNavigateTa
               </div>
               <div>
                 <span className="text-xs font-semibold text-slate-500 block">New Registrations</span>
-                <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">245</div>
+                <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+                  {candidates.length}
+                </div>
                 <div className="flex items-center gap-1.5 mt-1.5 text-xs">
-                  <span className="font-bold text-emerald-600">↗ +18%</span>
-                  <span className="text-slate-400 font-medium text-[11px]">this month</span>
+                  <span className="font-bold text-emerald-600">Verified</span>
+                  <span className="text-slate-400 font-medium text-[11px]">in platform database</span>
                 </div>
               </div>
             </div>
@@ -417,10 +423,13 @@ export default function AdminJobSeekers({ onLogout, onNavigateHome, onNavigateTa
               </div>
               <div>
                 <span className="text-xs font-semibold text-slate-500 block">Inactive / Suspended</span>
-                <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">290</div>
+                <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+                  {candidates.filter((c) => c.status !== 'Active').length}
+                </div>
                 <div className="flex items-center gap-1.5 mt-1.5 text-xs">
-                  <span className="font-bold text-rose-600">↗ +4%</span>
-                  <span className="text-slate-400 font-medium text-[11px]">vs last month</span>
+                  <span className={`font-bold ${candidates.filter((c) => c.status !== 'Active').length > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
+                    {candidates.filter((c) => c.status !== 'Active').length > 0 ? 'Requires attention' : 'All accounts clean'}
+                  </span>
                 </div>
               </div>
             </div>

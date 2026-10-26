@@ -1,4 +1,5 @@
 import React from 'react';
+import api from '../services/api';
 import {
   LayoutDashboard,
   Building2,
@@ -110,20 +111,45 @@ export default function CompanySidebar({
         {/* Bottom Profile & Logout Footer */}
         <div className="p-4 border-t border-slate-800/80 space-y-2">
           {/* Company Profile Strip */}
-          <div className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-800/60 transition-colors cursor-pointer group">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 text-[#1976D2] font-black text-xs flex items-center justify-center flex-shrink-0 shadow-xs tracking-wider">
-                ABC
+          {(() => {
+            const storedUser = api.getStoredUser?.() || {};
+            const compName = storedUser.company?.company_name || storedUser.name || 'Company Portal';
+            const initials = compName.split(' ').filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 3) || 'CP';
+            const logoUrl = storedUser.company?.logo_url 
+              || (storedUser.company?.logo ? (storedUser.company.logo.startsWith('http') ? storedUser.company.logo : `http://127.0.0.1:8000/storage/${storedUser.company.logo}`) : null)
+              || storedUser.avatar_url 
+              || (storedUser.avatar ? (storedUser.avatar.startsWith('http') ? storedUser.avatar : `http://127.0.0.1:8000/storage/${storedUser.avatar}`) : null);
+            return (
+              <div
+                onClick={() => {
+                  if (onSelectTab) onSelectTab('profile');
+                  if (onCloseMobile) onCloseMobile();
+                }}
+                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-800/60 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  {logoUrl ? (
+                    <img
+                      src={logoUrl}
+                      alt={compName}
+                      className="w-10 h-10 rounded-xl object-contain bg-white p-1 border border-slate-700 flex-shrink-0 shadow-xs"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-xl bg-blue-100 text-[#1976D2] font-black text-xs flex items-center justify-center flex-shrink-0 shadow-xs tracking-wider">
+                      {initials}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-white truncate group-hover:text-blue-300 transition-colors">
+                      {compName}
+                    </h4>
+                    <p className="text-[11px] text-slate-400 truncate">Employer</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white flex-shrink-0 transition-colors" />
               </div>
-              <div className="min-w-0">
-                <h4 className="text-xs font-bold text-white truncate group-hover:text-blue-300 transition-colors">
-                  ABC Industrial Services
-                </h4>
-                <p className="text-[11px] text-slate-400 truncate">Employer</p>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white flex-shrink-0 transition-colors" />
-          </div>
+            );
+          })()}
 
           {/* Logout Button */}
           <button

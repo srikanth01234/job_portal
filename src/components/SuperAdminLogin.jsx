@@ -15,6 +15,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import Logo from './Logo';
+import api from '../services/api';
 
 /**
  * Super Admin Login Page Component
@@ -61,47 +62,34 @@ export default function SuperAdminLogin({ onBackToHome, onLoginSuccess, onLoginC
     setErrorMessage('');
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMessage('');
 
     if (!email || !password) {
-      setErrorMessage('Please enter both your Admin ID and Security Password.');
+      setErrorMessage('Please enter both your Admin ID / Email and Password.');
       return;
     }
 
     setIsLoading(true);
 
-    // Simulate enterprise authentication handshake
-    setTimeout(() => {
+    try {
+      const res = await api.login(email.trim(), password);
       setIsLoading(false);
       setLoginSuccess(true);
-      const emailLower = email.toLowerCase();
 
-      if (emailLower.includes('kavin') || emailLower.includes('seeker') || emailLower.includes('candidate')) {
-        if (onLoginSeekerSuccess) {
-          setTimeout(() => {
-            onLoginSeekerSuccess();
-          }, 600);
-          return;
-        }
+      const userRole = res.user?.role;
+      if (userRole === 'seeker') {
+        if (onLoginSeekerSuccess) setTimeout(() => onLoginSeekerSuccess(), 500);
+      } else if (userRole === 'company') {
+        if (onLoginCompanySuccess) setTimeout(() => onLoginCompanySuccess(), 500);
+      } else {
+        if (onLoginSuccess) setTimeout(() => onLoginSuccess(), 500);
       }
-
-      if (emailLower.includes('abc') || emailLower.includes('company') || emailLower.includes('employer')) {
-        if (onLoginCompanySuccess) {
-          setTimeout(() => {
-            onLoginCompanySuccess();
-          }, 600);
-          return;
-        }
-      }
-
-      if (onLoginSuccess) {
-        setTimeout(() => {
-          onLoginSuccess();
-        }, 600);
-      }
-    }, 1000);
+    } catch (err) {
+      setIsLoading(false);
+      setErrorMessage(err.message || 'Invalid administrative credentials.');
+    }
   };
 
   return (

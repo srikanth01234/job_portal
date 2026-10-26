@@ -9,6 +9,20 @@ class JobListing extends Model
 {
     use HasFactory;
 
+    protected $appends = ['salary_range'];
+
+    public function getSalaryRangeAttribute()
+    {
+        if ($this->min_salary && $this->max_salary) {
+            return '₹' . number_format($this->min_salary) . ' - ₹' . number_format($this->max_salary);
+        } elseif ($this->min_salary) {
+            return 'From ₹' . number_format($this->min_salary);
+        } elseif ($this->max_salary) {
+            return 'Up to ₹' . number_format($this->max_salary);
+        }
+        return 'Not Disclosed';
+    }
+
     protected $fillable = [
         'company_id',
         'title',

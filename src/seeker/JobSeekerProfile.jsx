@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import {
   User,
   GraduationCap,
@@ -26,7 +27,8 @@ import {
   Plus,
   Share2,
   Download,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 import JobSeekerSidebar from './JobSeekerSidebar';
 import kavinAvatar from '../assets/kavin_avatar.jpg';
@@ -56,94 +58,247 @@ export default function JobSeekerProfile({
   // Active Sub-Tab
   const [activeSubTab, setActiveSubTab] = useState('basic'); // 'basic', 'education', 'experience', 'skills', 'resume', 'location', 'additional'
 
+  const storedUser = api.getStoredUser?.() || {};
+
   // Profile Form States
-  const [fullName, setFullName] = useState('Kavin Raj');
-  const [dob, setDob] = useState('12 Mar 2000');
-  const [email, setEmail] = useState('kavinraj@gmail.com');
+  const [fullName, setFullName] = useState(storedUser.name || '');
+  const [dob, setDob] = useState('');
+  const [email, setEmail] = useState(storedUser.email || '');
   const [countryCode, setCountryCode] = useState('+91');
-  const [phoneNumber, setPhoneNumber] = useState('98765 43210');
+  const [phoneNumber, setPhoneNumber] = useState(storedUser.phone || '');
   const [gender, setGender] = useState('Male');
-  const [currentLocation, setCurrentLocation] = useState('Thoothukudi, Tamil Nadu');
-  const [summary, setSummary] = useState(
-    'Motivated and detail-oriented fresher with a strong foundation in Flutter development and web technologies. Eager to contribute to a dynamic team and grow my skills in a challenging environment.'
-  );
+  const [currentLocation, setCurrentLocation] = useState('');
+  const [summary, setSummary] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState(storedUser.avatar_url || (storedUser.avatar ? (storedUser.avatar.startsWith('http') ? storedUser.avatar : `http://127.0.0.1:8000/storage/${storedUser.avatar}`) : null));
 
   // Social Links
-  const [linkedinUrl, setLinkedinUrl] = useState('https://www.linkedin.com/in/kavinraj');
-  const [portfolioUrl, setPortfolioUrl] = useState('https://kavinraj.dev');
-  const [githubUrl, setGithubUrl] = useState('https://github.com/kavinraj');
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [portfolioUrl, setPortfolioUrl] = useState('');
+  const [githubUrl, setGithubUrl] = useState('');
 
   // Education list
-  const [educationList, setEducationList] = useState([
-    {
-      degree: 'B.Sc. Computer Science',
-      institution: "St. Xavier's College, Thoothukudi",
-      year: '2020 – 2023',
-      grade: 'First Class with Distinction (84%)'
-    },
-    {
-      degree: 'Higher Secondary Certificate (HSC)',
-      institution: 'St. Mary’s Higher Secondary School, Thoothukudi',
-      year: '2019 – 2020',
-      grade: '88%'
-    }
-  ]);
+  const [educationList, setEducationList] = useState([]);
+  const [showEduModal, setShowEduModal] = useState(false);
+  const [newEdu, setNewEdu] = useState({ degree: '', institution: '', year: '', grade: '' });
 
   // Work Experience
-  const [experienceList, setExperienceList] = useState([
-    {
-      title: 'Junior Flutter Developer Intern',
-      company: 'TechCraft Solutions',
-      period: 'Jan 2024 – Jun 2024 (6 months)',
-      location: 'Tirunelveli, Tamil Nadu',
-      description: 'Assisted in building Flutter state-managed UI and Firebase cloud functions.'
-    }
-  ]);
+  const [experienceList, setExperienceList] = useState([]);
+  const [showExpModal, setShowExpModal] = useState(false);
+  const [newExp, setNewExp] = useState({ title: '', company: '', period: '', location: '', description: '' });
 
   // Skills
-  const [skillsList, setSkillsList] = useState([
-    'Flutter',
-    'Dart',
-    'HTML',
-    'CSS',
-    'JavaScript',
-    'React',
-    'Firebase',
-    'Git & GitHub',
-    'REST APIs'
-  ]);
+  const [skillsList, setSkillsList] = useState([]);
   const [newSkill, setNewSkill] = useState('');
 
   // Resume file state
   const [resumeData, setResumeData] = useState({
-    name: 'kavin_resume.pdf',
-    uploadDate: '10 Oct 2026',
-    size: '420 KB',
-    exists: true
+    name: 'No resume uploaded yet',
+    uploadDate: '-',
+    size: '-',
+    exists: false
   });
 
   // Preferred Locations
-  const [preferredLocations, setPreferredLocations] = useState([
-    'Thoothukudi, Tamil Nadu',
-    'Tirunelveli, Tamil Nadu',
-    'Madurai, Tamil Nadu',
-    'Chennai, Tamil Nadu'
-  ]);
+  const [preferredLocations, setPreferredLocations] = useState([]);
 
   // Modals & Feedback
   const [toastMessage, setToastMessage] = useState('');
   const [fullPreviewOpen, setFullPreviewOpen] = useState(false);
   const [resumeMenuOpen, setResumeMenuOpen] = useState(false);
   const [replaceResumeModalOpen, setReplaceResumeModalOpen] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState(null);
 
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3500);
   };
 
-  const handleSaveProfile = (e) => {
-    e.preventDefault();
-    showToast('Profile information updated successfully!');
+  const handleExtractResume = async () => {
+    try {
+      setIsExtracting(true);
+      showToast('⚡ Extracting profile information from resume...');
+      const res = await api.extractResume(true);
+      if (res && res.extracted) {
+        const ext = res.extracted;
+        if (ext.name) setFullName(ext.name);
+        if (ext.email) setEmail(ext.email);
+        if (ext.phone) setPhoneNumber(ext.phone);
+        if (ext.linkedin_url) setLinkedinUrl(ext.linkedin_url);
+        if (ext.professional_summary) setSummary(ext.professional_summary);
+        if (ext.skills && Array.isArray(ext.skills)) setSkillsList(ext.skills);
+        if (ext.education && Array.isArray(ext.education)) setEducationList(ext.education);
+        if (ext.work_history && Array.isArray(ext.work_history)) setExperienceList(ext.work_history);
+
+        const stored = api.getStoredUser?.() || {};
+        if (ext.name) stored.name = ext.name;
+        if (ext.email) stored.email = ext.email;
+        if (ext.phone) stored.phone = ext.phone;
+        localStorage.setItem('stark_user', JSON.stringify(stored));
+        window.dispatchEvent(new Event('stark_user_updated'));
+
+        showToast('✅ Profile details successfully extracted from resume and saved!');
+      } else {
+        showToast('Resume parsed, but no structured details found.');
+      }
+    } catch (err) {
+      console.error('Resume extraction error:', err);
+      showToast('Extraction error: ' + (err.message || 'Failed to extract resume info'));
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  // Load profile from API on mount
+  useEffect(() => {
+    let isMounted = true;
+    const loadProfile = async () => {
+      try {
+        const res = await api.getSeekerProfile();
+        if (res && res.user && isMounted) {
+          const u = res.user;
+          const p = res.profile || {};
+          if (u.name) setFullName(u.name);
+          if (u.email) setEmail(u.email);
+          if (u.phone) setPhoneNumber(u.phone);
+          if (u.avatar_url || u.avatar) {
+            setAvatarUrl(u.avatar_url || (u.avatar.startsWith('http') ? u.avatar : `http://127.0.0.1:8000/storage/${u.avatar}`));
+          }
+          if (p.current_location) setCurrentLocation(p.current_location);
+          if (p.professional_summary) setSummary(p.professional_summary);
+          if (p.linkedin_url) setLinkedinUrl(p.linkedin_url);
+          if (p.portfolio_url) setPortfolioUrl(p.portfolio_url);
+          if (p.github_url) setGithubUrl(p.github_url);
+          if (p.skills) {
+            try {
+              const parsed = typeof p.skills === 'string' ? JSON.parse(p.skills) : p.skills;
+              if (Array.isArray(parsed)) setSkillsList(parsed);
+            } catch (e) {}
+          }
+          if (p.education) {
+            try {
+              const parsed = typeof p.education === 'string' ? JSON.parse(p.education) : p.education;
+              if (Array.isArray(parsed)) setEducationList(parsed);
+            } catch (e) {}
+          }
+          if (p.work_history) {
+            try {
+              const parsed = typeof p.work_history === 'string' ? JSON.parse(p.work_history) : p.work_history;
+              if (Array.isArray(parsed)) setExperienceList(parsed);
+            } catch (e) {}
+          }
+          if (p.preferred_locations) {
+            try {
+              const parsed = typeof p.preferred_locations === 'string' ? JSON.parse(p.preferred_locations) : p.preferred_locations;
+              if (Array.isArray(parsed)) setPreferredLocations(parsed);
+            } catch (e) {}
+          }
+          if (p.resume_path) {
+            setResumeData({
+              name: p.resume_filename || 'my_resume.pdf',
+              uploadDate: 'Recently',
+              size: 'Uploaded',
+              exists: true,
+              url: `http://127.0.0.1:8000/storage/${p.resume_path}`
+            });
+          }
+
+          // Ensure localStorage is updated with live database user info
+          const stored = api.getStoredUser?.() || {};
+          localStorage.setItem('stark_user', JSON.stringify({
+            ...stored,
+            ...u,
+            name: u.name || stored.name,
+            email: u.email || stored.email,
+            avatar_url: u.avatar_url || stored.avatar_url
+          }));
+          window.dispatchEvent(new Event('stark_user_updated'));
+        }
+      } catch (err) {
+        console.warn('Seeker profile fetch:', err);
+      }
+    };
+    loadProfile();
+    return () => { isMounted = false; };
+  }, []);
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    setSelectedAvatarFile(file);
+    try {
+      showToast('Uploading profile photo to server...');
+      const res = await api.uploadAvatar(file);
+      if (res && res.avatar_url) {
+        setAvatarUrl(res.avatar_url);
+        const stored = api.getStoredUser?.() || {};
+        stored.avatar = res.user?.avatar;
+        stored.avatar_url = res.avatar_url;
+        localStorage.setItem('stark_user', JSON.stringify(stored));
+        window.dispatchEvent(new Event('stark_user_updated'));
+      }
+      showToast('Profile photo updated successfully!');
+    } catch (err) {
+      console.error('Avatar upload failed:', err);
+      setAvatarUrl(URL.createObjectURL(file));
+      showToast('Preview updated. Click Save Changes to persist.');
+    }
+  };
+
+  const handleSaveProfile = async (e) => {
+    if (e) e.preventDefault();
+    setIsSaving(true);
+    try {
+      // 1. If an avatar photo file was selected, upload it
+      let finalAvatarUrl = avatarUrl;
+      if (selectedAvatarFile) {
+        try {
+          const avatarRes = await api.uploadAvatar(selectedAvatarFile);
+          if (avatarRes && avatarRes.avatar_url) {
+            finalAvatarUrl = avatarRes.avatar_url;
+            setAvatarUrl(finalAvatarUrl);
+          }
+        } catch (uploadErr) {
+          console.warn('Avatar upload on save:', uploadErr);
+        }
+      }
+
+      // 2. Save profile fields to database
+      const res = await api.updateSeekerProfile({
+        name: fullName,
+        email: email,
+        phone: phoneNumber,
+        current_location: currentLocation,
+        professional_summary: summary,
+        linkedin_url: linkedinUrl,
+        portfolio_url: portfolioUrl,
+        github_url: githubUrl,
+        skills: skillsList,
+        education: educationList,
+        work_history: experienceList,
+        preferred_locations: preferredLocations
+      });
+
+      const stored = api.getStoredUser?.() || {};
+      const updatedUser = {
+        ...stored,
+        ...(res && res.user ? res.user : {}),
+        name: fullName,
+        email: email,
+        phone: phoneNumber,
+        avatar_url: finalAvatarUrl || stored.avatar_url
+      };
+      localStorage.setItem('stark_user', JSON.stringify(updatedUser));
+      window.dispatchEvent(new Event('stark_user_updated'));
+
+      showToast('✅ Profile information & photo saved successfully!');
+    } catch (err) {
+      console.error('Failed to update seeker profile:', err);
+      showToast('Profile saved locally.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAddSkill = (e) => {
@@ -250,8 +405,8 @@ export default function JobSeekerProfile({
                 className="flex items-center gap-1.5 p-1 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <img
-                  src={kavinAvatar}
-                  alt="Kavin Raj"
+                  src={avatarUrl || kavinAvatar}
+                  alt={fullName || 'User Avatar'}
                   className="w-10 h-10 rounded-full object-cover shadow-xs ring-1 ring-slate-200"
                 />
                 <ChevronDown className="w-4 h-4 text-slate-600" />
@@ -260,8 +415,8 @@ export default function JobSeekerProfile({
               {profileDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 text-xs">
                   <div className="px-3 py-2 border-b border-slate-100">
-                    <p className="font-bold text-slate-900">Kavin Raj</p>
-                    <p className="text-slate-500 truncate">kavinraj@gmail.com</p>
+                    <p className="font-bold text-slate-900">{fullName || 'Candidate'}</p>
+                    <p className="text-slate-500 truncate">{email || 'candidate@starkjobs.com'}</p>
                   </div>
                   <div className="py-1">
                     <button
@@ -390,18 +545,20 @@ export default function JobSeekerProfile({
 
                     <button
                       type="submit"
-                      className="bg-[#1976D2] hover:bg-[#1565C0] text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl transition-colors cursor-pointer shadow-xs"
+                      disabled={isSaving}
+                      className="bg-[#1976D2] hover:bg-[#1565C0] text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl transition-colors cursor-pointer shadow-xs disabled:opacity-50 flex items-center gap-1.5"
                     >
-                      Save Changes
+                      <Check className="w-3.5 h-3.5" />
+                      <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
                     </button>
                   </div>
 
-                  {/* Profile Photo Section matching Screenshot */}
+                  {/* Profile Photo Section */}
                   <div className="flex items-center gap-5">
                     <div className="relative">
                       <img
-                        src={kavinAvatar}
-                        alt="Kavin Raj"
+                        src={avatarUrl || kavinAvatar}
+                        alt={fullName || 'Candidate Avatar'}
                         className="w-20 h-20 rounded-full object-cover shadow-sm ring-2 ring-slate-100"
                       />
                       <label
@@ -414,7 +571,7 @@ export default function JobSeekerProfile({
                           type="file"
                           accept="image/*"
                           className="hidden"
-                          onChange={() => showToast('Photo uploaded successfully!')}
+                          onChange={handleAvatarUpload}
                         />
                       </label>
                     </div>
@@ -430,7 +587,7 @@ export default function JobSeekerProfile({
                       <p className="text-[11px] text-slate-400 mt-1.5">
                         Recommended size 400 × 400 px
                       </p>
-                      <p className="text-[11px] text-slate-400">JPG, PNG (Max 2MB)</p>
+                      <p className="text-[11px] text-slate-400">JPG, PNG, WEBP (Max 2MB)</p>
                     </div>
                   </div>
 
@@ -613,6 +770,26 @@ export default function JobSeekerProfile({
                       </div>
                     </div>
                   </div>
+
+                  {/* Prominent Bottom Save Changes Button */}
+                  <div className="pt-5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">
+                        Ready to save your profile?
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Ensure all your contact details, summary, and profile photo are saved to your account.
+                      </p>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isSaving}
+                      className="bg-[#1976D2] hover:bg-[#1565C0] text-white text-xs sm:text-sm font-bold px-6 py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 flex-shrink-0"
+                    >
+                      <Check className="w-4 h-4 stroke-[2.5]" />
+                      <span>{isSaving ? 'Saving Changes...' : 'Save Changes'}</span>
+                    </button>
+                  </div>
                 </form>
               )}
 
@@ -626,25 +803,102 @@ export default function JobSeekerProfile({
                     </div>
                     <button
                       type="button"
-                      onClick={() => showToast('Add Education form opened')}
-                      className="px-3 py-1.5 bg-[#1976D2] text-white rounded-xl text-xs font-semibold flex items-center gap-1"
+                      onClick={() => setShowEduModal(!showEduModal)}
+                      className="px-3 py-1.5 bg-[#1976D2] hover:bg-[#1565C0] text-white rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Add Degree</span>
+                      <span>{showEduModal ? 'Cancel' : 'Add Degree'}</span>
                     </button>
                   </div>
 
-                  <div className="space-y-3">
-                    {educationList.map((edu, idx) => (
-                      <div key={idx} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-bold text-slate-900 text-sm">{edu.degree}</h4>
-                          <span className="text-xs text-slate-500">{edu.year}</span>
-                        </div>
-                        <p className="text-xs text-slate-600">{edu.institution}</p>
-                        <p className="text-xs font-semibold text-emerald-700 mt-1">{edu.grade}</p>
+                  {showEduModal && (
+                    <div className="p-4 rounded-2xl border border-blue-200 bg-blue-50/50 space-y-3">
+                      <h3 className="font-bold text-xs text-blue-900">Add New Education</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <input
+                          type="text"
+                          placeholder="Degree / Course (e.g. B.Tech, B.Sc)"
+                          value={newEdu.degree}
+                          onChange={(e) => setNewEdu({ ...newEdu, degree: e.target.value })}
+                          className="p-2 border border-slate-200 rounded-lg bg-white"
+                        />
+                        <input
+                          type="text"
+                          placeholder="College / Institution name"
+                          value={newEdu.institution}
+                          onChange={(e) => setNewEdu({ ...newEdu, institution: e.target.value })}
+                          className="p-2 border border-slate-200 rounded-lg bg-white"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Year (e.g. 2021 – 2025)"
+                          value={newEdu.year}
+                          onChange={(e) => setNewEdu({ ...newEdu, year: e.target.value })}
+                          className="p-2 border border-slate-200 rounded-lg bg-white"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Grade / Percentage (e.g. 85%)"
+                          value={newEdu.grade}
+                          onChange={(e) => setNewEdu({ ...newEdu, grade: e.target.value })}
+                          className="p-2 border border-slate-200 rounded-lg bg-white"
+                        />
                       </div>
-                    ))}
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!newEdu.degree.trim()) return;
+                          const updated = [...educationList, newEdu];
+                          setEducationList(updated);
+                          setNewEdu({ degree: '', institution: '', year: '', grade: '' });
+                          setShowEduModal(false);
+                          try {
+                            await api.updateSeekerProfile({ education: updated });
+                            showToast('Education saved to database!');
+                          } catch (e) {
+                            showToast('Education added.');
+                          }
+                        }}
+                        className="px-4 py-1.5 bg-[#1976D2] text-white text-xs font-bold rounded-lg cursor-pointer"
+                      >
+                        Save Degree
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    {educationList.length === 0 ? (
+                      <div className="text-center py-8 text-slate-400 text-xs">
+                        <GraduationCap className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                        <p className="font-semibold text-slate-600">No education entries yet</p>
+                        <p className="text-slate-400 mt-0.5">Click "Add Degree" above to list your qualifications.</p>
+                      </div>
+                    ) : (
+                      educationList.map((edu, idx) => (
+                        <div key={idx} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1 relative group">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-bold text-slate-900 text-sm">{edu.degree}</h4>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-slate-500">{edu.year}</span>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const updated = educationList.filter((_, i) => i !== idx);
+                                  setEducationList(updated);
+                                  await api.updateSeekerProfile({ education: updated });
+                                  showToast('Entry removed.');
+                                }}
+                                className="text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-xs text-slate-600">{edu.institution}</p>
+                          {edu.grade && <p className="text-xs font-semibold text-emerald-700 mt-1">{edu.grade}</p>}
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -659,25 +913,111 @@ export default function JobSeekerProfile({
                     </div>
                     <button
                       type="button"
-                      onClick={() => showToast('Add Experience form opened')}
-                      className="px-3 py-1.5 bg-[#1976D2] text-white rounded-xl text-xs font-semibold flex items-center gap-1"
+                      onClick={() => setShowExpModal(!showExpModal)}
+                      className="px-3 py-1.5 bg-[#1976D2] hover:bg-[#1565C0] text-white rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Add Experience</span>
+                      <span>{showExpModal ? 'Cancel' : 'Add Experience'}</span>
                     </button>
                   </div>
 
-                  <div className="space-y-3">
-                    {experienceList.map((exp, idx) => (
-                      <div key={idx} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-bold text-slate-900 text-sm">{exp.title}</h4>
-                          <span className="text-xs text-slate-500">{exp.period}</span>
+                  {showExpModal && (
+                    <div className="p-4 rounded-2xl border border-blue-200 bg-blue-50/50 space-y-3">
+                      <h3 className="font-bold text-xs text-blue-900">Add New Experience</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <input
+                          type="text"
+                          placeholder="Job Title (e.g. Flutter Intern, Junior Engineer)"
+                          value={newExp.title}
+                          onChange={(e) => setNewExp({ ...newExp, title: e.target.value })}
+                          className="p-2 border border-slate-200 rounded-lg bg-white"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Company name"
+                          value={newExp.company}
+                          onChange={(e) => setNewExp({ ...newExp, company: e.target.value })}
+                          className="p-2 border border-slate-200 rounded-lg bg-white"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Period (e.g. Jan 2024 – Jun 2024)"
+                          value={newExp.period}
+                          onChange={(e) => setNewExp({ ...newExp, period: e.target.value })}
+                          className="p-2 border border-slate-200 rounded-lg bg-white"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Location (e.g. Tirunelveli, Tamil Nadu)"
+                          value={newExp.location}
+                          onChange={(e) => setNewExp({ ...newExp, location: e.target.value })}
+                          className="p-2 border border-slate-200 rounded-lg bg-white"
+                        />
+                        <div className="sm:col-span-2">
+                          <textarea
+                            rows={2}
+                            placeholder="Key responsibilities and achievements..."
+                            value={newExp.description}
+                            onChange={(e) => setNewExp({ ...newExp, description: e.target.value })}
+                            className="w-full p-2 border border-slate-200 rounded-lg bg-white"
+                          />
                         </div>
-                        <p className="text-xs font-medium text-slate-600">{exp.company} • {exp.location}</p>
-                        <p className="text-xs text-slate-500 leading-relaxed">{exp.description}</p>
                       </div>
-                    ))}
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!newExp.title.trim()) return;
+                          const updated = [...experienceList, newExp];
+                          setExperienceList(updated);
+                          setNewExp({ title: '', company: '', period: '', location: '', description: '' });
+                          setShowExpModal(false);
+                          try {
+                            await api.updateSeekerProfile({ work_history: updated });
+                            showToast('Work experience saved to database!');
+                          } catch (e) {
+                            showToast('Experience added.');
+                          }
+                        }}
+                        className="px-4 py-1.5 bg-[#1976D2] text-white text-xs font-bold rounded-lg cursor-pointer"
+                      >
+                        Save Experience
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    {experienceList.length === 0 ? (
+                      <div className="text-center py-8 text-slate-400 text-xs">
+                        <Briefcase className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                        <p className="font-semibold text-slate-600">No work experience listed yet</p>
+                        <p className="text-slate-400 mt-0.5">Click "Add Experience" above to highlight your background.</p>
+                      </div>
+                    ) : (
+                      experienceList.map((exp, idx) => (
+                        <div key={idx} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1.5 relative group">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-bold text-slate-900 text-sm">{exp.title}</h4>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-slate-500">{exp.period}</span>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const updated = experienceList.filter((_, i) => i !== idx);
+                                  setExperienceList(updated);
+                                  await api.updateSeekerProfile({ work_history: updated });
+                                  showToast('Entry removed.');
+                                }}
+                                className="text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-xs font-medium text-slate-600">{exp.company} • {exp.location}</p>
+                          {exp.description && <p className="text-xs text-slate-500 leading-relaxed">{exp.description}</p>}
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -729,25 +1069,72 @@ export default function JobSeekerProfile({
               {/* Resume Sub-Tab */}
               {activeSubTab === 'resume' && (
                 <div className="space-y-5">
-                  <div className="pb-3 border-b border-slate-100">
-                    <h2 className="text-base font-bold text-slate-900">Resume & CV</h2>
-                    <p className="text-xs text-slate-500">Manage uploaded CV document.</p>
+                  <div className="pb-3 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-base font-bold text-slate-900">Resume & CV</h2>
+                      <p className="text-xs text-slate-500">Manage uploaded CV document and auto-extract information.</p>
+                    </div>
+                    {resumeData.exists && (
+                      <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full border border-emerald-200">
+                        Resume Active
+                      </span>
+                    )}
                   </div>
 
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <FileText className="w-8 h-8 text-blue-600" />
+                      <div className="w-12 h-12 rounded-xl bg-blue-100 text-[#1976D2] flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-6 h-6" />
+                      </div>
                       <div>
                         <p className="font-bold text-slate-900 text-sm">{resumeData.name}</p>
                         <p className="text-xs text-slate-500">{resumeData.size} • Uploaded {resumeData.uploadDate}</p>
                       </div>
                     </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (resumeData.url) window.open(resumeData.url, '_blank');
+                          else setFullPreviewOpen(true);
+                        }}
+                        className="px-3.5 py-2 bg-white border border-slate-200 text-blue-600 font-bold rounded-xl text-xs hover:bg-blue-50 flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>View Document</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setReplaceResumeModalOpen(true)}
+                        className="px-3.5 py-2 bg-blue-600 text-white font-bold rounded-xl text-xs hover:bg-blue-700 flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Upload New Resume</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Extract Info Card */}
+                  <div className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50/50 rounded-2xl border border-blue-200/80 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-xl bg-blue-600 text-white shadow-xs">
+                        <Sparkles className="w-5 h-5 text-yellow-300" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-sm">Auto-Extract Details from Resume</h4>
+                        <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                          Extract your name, contact info, summary, education, experience, and key skills directly from your resume with our AI parser.
+                        </p>
+                      </div>
+                    </div>
                     <button
                       type="button"
-                      onClick={() => setFullPreviewOpen(true)}
-                      className="px-3.5 py-1.5 bg-white border border-slate-200 text-blue-600 font-bold rounded-xl text-xs hover:bg-blue-50"
+                      onClick={handleExtractResume}
+                      disabled={isExtracting}
+                      className="w-full sm:w-auto px-5 py-2.5 bg-[#1976D2] hover:bg-[#1565C0] text-white text-xs font-bold rounded-xl shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 transition-all"
                     >
-                      Preview
+                      <Sparkles className="w-4 h-4 text-yellow-300 animate-pulse" />
+                      <span>{isExtracting ? 'Extracting Resume Info...' : 'Extract Info from Uploaded Resume'}</span>
                     </button>
                   </div>
                 </div>
@@ -845,31 +1232,71 @@ export default function JobSeekerProfile({
                     </button>
 
                     {resumeMenuOpen && (
-                      <div className="absolute right-0 top-full mt-1 w-32 bg-white rounded-xl shadow-xl border border-slate-200 p-1 z-30 text-[11px]">
+                      <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-xl shadow-xl border border-slate-200 p-1 z-30 text-[11px]">
                         <button
                           type="button"
                           onClick={() => {
                             setResumeMenuOpen(false);
-                            setFullPreviewOpen(true);
+                            if (resumeData.url) {
+                              window.open(resumeData.url, '_blank');
+                            } else {
+                              setFullPreviewOpen(true);
+                            }
                           }}
-                          className="w-full text-left px-2.5 py-1.5 hover:bg-slate-50 rounded-md"
+                          className="w-full text-left px-2.5 py-1.5 hover:bg-slate-50 rounded-md cursor-pointer flex items-center gap-1.5"
                         >
-                          View Resume
+                          <Eye className="w-3.5 h-3.5 text-blue-600" />
+                          <span>View Resume</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => {
                             setResumeMenuOpen(false);
-                            showToast('Resume downloaded!');
+                            if (resumeData.url) {
+                              const a = document.createElement('a');
+                              a.href = resumeData.url;
+                              a.download = resumeData.name || 'resume.pdf';
+                              a.target = '_blank';
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                              showToast('Downloading resume...');
+                            } else {
+                              showToast('No resume file URL found.');
+                            }
                           }}
-                          className="w-full text-left px-2.5 py-1.5 hover:bg-slate-50 rounded-md"
+                          className="w-full text-left px-2.5 py-1.5 hover:bg-slate-50 rounded-md cursor-pointer flex items-center gap-1.5"
                         >
-                          Download
+                          <Download className="w-3.5 h-3.5 text-slate-600" />
+                          <span>Download</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setResumeMenuOpen(false);
+                            handleExtractResume();
+                          }}
+                          className="w-full text-left px-2.5 py-1.5 hover:bg-blue-50 text-blue-700 rounded-md cursor-pointer flex items-center gap-1.5 font-semibold"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Extract Info</span>
                         </button>
                       </div>
                     )}
                   </div>
                 </div>
+
+                {/* Extract Info Action Button */}
+                <button
+                  type="button"
+                  onClick={handleExtractResume}
+                  disabled={isExtracting}
+                  className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                  title="Extract name, skills, summary, education, and work history"
+                >
+                  <Sparkles className="w-4 h-4 text-yellow-300 animate-pulse" />
+                  <span>{isExtracting ? 'Extracting Resume Info...' : '⚡ Extract Info from Resume'}</span>
+                </button>
 
                 {/* Actions: Replace Resume & Remove matching Screenshot */}
                 <div className="flex items-center gap-2">
@@ -886,6 +1313,13 @@ export default function JobSeekerProfile({
                     type="button"
                     onClick={() => {
                       if (window.confirm('Are you sure you want to remove your resume?')) {
+                        setResumeData({
+                          name: 'No resume uploaded yet',
+                          uploadDate: '-',
+                          size: '-',
+                          exists: false,
+                          url: null
+                        });
                         showToast('Resume removed.');
                       }
                     }}
@@ -903,72 +1337,145 @@ export default function JobSeekerProfile({
                   <h3 className="font-bold text-slate-900 text-sm">Resume Preview</h3>
                   <button
                     type="button"
-                    onClick={() => setFullPreviewOpen(true)}
+                    onClick={() => {
+                      if (resumeData.url) window.open(resumeData.url, '_blank');
+                      else setFullPreviewOpen(true);
+                    }}
                     className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
                   >
                     View Full Preview
                   </button>
                 </div>
 
-                {/* Visual Resume Miniature matching Screenshot */}
-                <div
-                  onClick={() => setFullPreviewOpen(true)}
-                  className="rounded-xl border border-slate-200 overflow-hidden shadow-2xs hover:shadow-md transition-shadow cursor-pointer bg-white text-[10px]"
-                >
-                  <div className="grid grid-cols-12 min-h-[260px]">
-                    {/* Left Dark Column */}
-                    <div className="col-span-5 bg-[#0A192F] text-white p-3 space-y-2 flex flex-col items-center text-center">
-                      <img
-                        src={kavinAvatar}
-                        alt="Kavin"
-                        className="w-10 h-10 rounded-full object-cover border border-white/20 mt-1"
+                {/* Resume Preview: Actual Uploaded PDF Document or Structured Overview */}
+                {resumeData.url ? (
+                  <div className="rounded-xl border border-slate-200 overflow-hidden shadow-2xs hover:shadow-md transition-shadow bg-slate-50 flex flex-col">
+                    <div className="relative w-full h-[300px] bg-slate-100 overflow-hidden group">
+                      <iframe
+                        src={`${resumeData.url}#toolbar=0&navpanes=0&scrollbar=0`}
+                        title="Uploaded Resume Preview"
+                        className="w-full h-full border-0 bg-white"
                       />
-                      <div>
-                        <p className="font-bold text-[10px] text-white uppercase tracking-tight">
-                          KAVIN RAJ
-                        </p>
-                        <p className="text-[8px] text-blue-300">Flutter Developer</p>
-                      </div>
-
-                      <div className="text-[7px] text-slate-300 space-y-1 w-full text-left pt-2 border-t border-slate-700/60">
-                        <p className="truncate">✉ kavinraj@gmail.com</p>
-                        <p>📞 +91 98765 43210</p>
-                        <p>📍 Thoothukudi, TN</p>
-                      </div>
-
-                      <div className="text-[7px] text-slate-300 space-y-0.5 w-full text-left pt-2 border-t border-slate-700/60">
-                        <p className="font-bold text-white text-[8px] uppercase">Skills</p>
-                        <p>Flutter, Dart</p>
-                        <p>HTML, CSS, JS</p>
-                        <p>Firebase, Git</p>
+                      <div className="absolute inset-0 bg-slate-900/20 group-hover:bg-slate-900/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 backdrop-blur-[1px]">
+                        <button
+                          type="button"
+                          onClick={() => window.open(resumeData.url, '_blank')}
+                          className="px-4 py-2 bg-white text-[#1976D2] font-bold text-xs rounded-xl shadow-lg hover:bg-blue-50 flex items-center gap-1.5 transition-all transform group-hover:scale-105 cursor-pointer"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Open Full Resume</span>
+                        </button>
                       </div>
                     </div>
+                    <div className="p-3 bg-white border-t border-slate-200 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <span className="font-semibold text-slate-800 truncate text-[11px]">
+                          {resumeData.name || 'resume.pdf'}
+                        </span>
+                      </div>
+                      <a
+                        href={resumeData.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] font-bold text-blue-600 hover:underline flex-shrink-0 ml-2"
+                      >
+                        View Full PDF
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => setFullPreviewOpen(true)}
+                    className="rounded-xl border border-slate-200 overflow-hidden shadow-2xs hover:shadow-md transition-shadow cursor-pointer bg-white text-[10px]"
+                  >
+                    <div className="grid grid-cols-12 min-h-[260px]">
+                      {/* Left Dark Column */}
+                      <div className="col-span-5 bg-[#0A192F] text-white p-3 space-y-2 flex flex-col items-center text-center">
+                        <img
+                          src={avatarUrl || kavinAvatar}
+                          alt={fullName || 'Candidate'}
+                          className="w-10 h-10 rounded-full object-cover border border-white/20 mt-1"
+                        />
+                        <div>
+                          <p className="font-bold text-[10px] text-white uppercase tracking-tight truncate max-w-full">
+                            {fullName ? fullName.toUpperCase() : 'CANDIDATE'}
+                          </p>
+                          <p className="text-[8px] text-blue-300 truncate max-w-full">
+                            {skillsList[0] ? `${skillsList[0]} Specialist` : 'Job Seeker'}
+                          </p>
+                        </div>
 
-                    {/* Right Content Column */}
-                    <div className="col-span-7 p-3 bg-white space-y-2 text-[8px] text-slate-700">
-                      <div>
-                        <p className="font-bold text-slate-900 uppercase text-[8px]">
-                          Professional Summary
-                        </p>
-                        <p className="text-[7px] text-slate-500 line-clamp-3 mt-0.5">
-                          Motivated and detail-oriented fresher with a strong foundation in Flutter development and web technologies.
-                        </p>
+                        <div className="text-[7px] text-slate-300 space-y-1 w-full text-left pt-2 border-t border-slate-700/60">
+                          <p className="truncate">✉ {email || 'Email not set'}</p>
+                          <p>📞 {phoneNumber || 'Phone not set'}</p>
+                          <p className="truncate">📍 {currentLocation || 'Tamil Nadu'}</p>
+                        </div>
+
+                        <div className="text-[7px] text-slate-300 space-y-0.5 w-full text-left pt-2 border-t border-slate-700/60">
+                          <p className="font-bold text-white text-[8px] uppercase">Skills</p>
+                          {skillsList && skillsList.length > 0 ? (
+                            skillsList.slice(0, 4).map((sk, idx) => (
+                              <p key={idx} className="truncate">• {sk}</p>
+                            ))
+                          ) : (
+                            <>
+                              <p>• Python, JavaScript</p>
+                              <p>• React, Next.js</p>
+                              <p>• MySQL, FastAPI</p>
+                            </>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="pt-1 border-t border-slate-100">
-                        <p className="font-bold text-slate-900 uppercase text-[8px]">Education</p>
-                        <p className="font-semibold text-slate-800 text-[7px] mt-0.5">B.Sc. Computer Science</p>
-                        <p className="text-[6px] text-slate-400">St. Xavier's College • 2020–2023</p>
-                      </div>
+                      {/* Right Content Column */}
+                      <div className="col-span-7 p-3 bg-white space-y-2 text-[8px] text-slate-700">
+                        <div>
+                          <p className="font-bold text-slate-900 uppercase text-[8px]">
+                            Professional Summary
+                          </p>
+                          <p className="text-[7px] text-slate-500 line-clamp-3 mt-0.5 leading-tight">
+                            {summary || 'Software engineering professional focused on building reliable systems, writing clean code, and contributing to high impact products.'}
+                          </p>
+                        </div>
 
-                      <div className="pt-1 border-t border-slate-100">
-                        <p className="font-bold text-slate-900 uppercase text-[8px]">Projects</p>
-                        <p className="font-semibold text-slate-800 text-[7px] mt-0.5">Expense Tracker App</p>
-                        <p className="font-semibold text-slate-800 text-[7px]">E-Commerce UI</p>
+                        <div className="pt-1 border-t border-slate-100">
+                          <p className="font-bold text-slate-900 uppercase text-[8px]">Education</p>
+                          {educationList && educationList.length > 0 ? (
+                            educationList.slice(0, 2).map((edu, idx) => (
+                              <div key={idx} className="mt-0.5">
+                                <p className="font-semibold text-slate-800 text-[7px] truncate">{edu.degree}</p>
+                                <p className="text-[6px] text-slate-400 truncate">{edu.institution} {edu.year ? `• ${edu.year}` : ''}</p>
+                              </div>
+                            ))
+                          ) : (
+                            <>
+                              <p className="font-semibold text-slate-800 text-[7px] mt-0.5">B.Sc. Computer Science</p>
+                              <p className="text-[6px] text-slate-400">Bharathiar University</p>
+                            </>
+                          )}
+                        </div>
+
+                        <div className="pt-1 border-t border-slate-100">
+                          <p className="font-bold text-slate-900 uppercase text-[8px]">Experience & Projects</p>
+                          {experienceList && experienceList.length > 0 ? (
+                            experienceList.slice(0, 2).map((exp, idx) => (
+                              <div key={idx} className="mt-0.5">
+                                <p className="font-semibold text-slate-800 text-[7px] truncate">{exp.title} {exp.company ? `• ${exp.company}` : ''}</p>
+                                <p className="text-[6px] text-slate-400 truncate">{exp.period || exp.location || ''}</p>
+                              </div>
+                            ))
+                          ) : (
+                            <>
+                              <p className="font-semibold text-slate-800 text-[7px] mt-0.5">Software Developer Intern</p>
+                              <p className="text-[6px] text-slate-400">Doozy Info Software Solutions</p>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Widget 3: Profile Tips matching Screenshot */}
@@ -1010,7 +1517,7 @@ export default function JobSeekerProfile({
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-blue-600" />
                 <h3 className="font-bold text-base text-slate-900">
-                  Curriculum Vitae — Kavin Raj
+                  Curriculum Vitae — {fullName || 'Candidate'}
                 </h3>
               </div>
               <button
@@ -1028,19 +1535,19 @@ export default function JobSeekerProfile({
                 <div className="col-span-4 bg-[#0A192F] text-white p-5 space-y-4">
                   <div className="text-center">
                     <img
-                      src={kavinAvatar}
-                      alt="Kavin Raj"
+                      src={avatarUrl || kavinAvatar}
+                      alt={fullName || 'Candidate'}
                       className="w-20 h-20 rounded-full object-cover mx-auto ring-2 ring-white/20"
                     />
-                    <h4 className="font-bold text-sm text-white mt-2">KAVIN RAJ</h4>
-                    <p className="text-xs text-blue-300">Flutter Developer</p>
+                    <h4 className="font-bold text-sm text-white mt-2 uppercase">{fullName || 'Candidate'}</h4>
+                    <p className="text-xs text-blue-300">{skillsList[0] ? `${skillsList[0]} Specialist` : 'Job Seeker'}</p>
                   </div>
 
                   <div className="text-xs space-y-2 pt-3 border-t border-slate-800 text-slate-300">
-                    <p className="truncate">✉ kavinraj@gmail.com</p>
-                    <p>📞 +91 98765 43210</p>
-                    <p>📍 Thoothukudi, TN</p>
-                    <p>🌐 kavinraj.dev</p>
+                    <p className="truncate">✉ {email || 'Email not set'}</p>
+                    <p>📞 {phoneNumber || 'Phone not set'}</p>
+                    <p>📍 {currentLocation || 'Tamil Nadu'}</p>
+                    {portfolioUrl && <p className="truncate">🌐 {portfolioUrl}</p>}
                   </div>
 
                   <div className="pt-3 border-t border-slate-800 text-xs space-y-1">
@@ -1089,16 +1596,37 @@ export default function JobSeekerProfile({
             </div>
 
             <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+              {resumeData.url && (
+                <button
+                  type="button"
+                  onClick={() => window.open(resumeData.url, '_blank')}
+                  className="px-4 py-2.5 text-xs font-bold text-[#1976D2] border border-blue-600 hover:bg-blue-50 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Open Uploaded PDF</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
-                  showToast('Resume downloaded to your device!');
+                  if (resumeData.url) {
+                    const a = document.createElement('a');
+                    a.href = resumeData.url;
+                    a.download = resumeData.name || 'resume.pdf';
+                    a.target = '_blank';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    showToast('Downloading resume...');
+                  } else {
+                    showToast('Resume downloaded to your device!');
+                  }
                   setFullPreviewOpen(false);
                 }}
-                className="px-5 py-2.5 text-xs font-bold text-white bg-[#1976D2] hover:bg-[#1565C0] rounded-xl flex items-center gap-1.5 shadow-xs"
+                className="px-5 py-2.5 text-xs font-bold text-white bg-[#1976D2] hover:bg-[#1565C0] rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Download PDF</span>
+                <span>Download Resume</span>
               </button>
             </div>
           </div>
@@ -1129,16 +1657,51 @@ export default function JobSeekerProfile({
                 accept=".pdf,.doc,.docx"
                 className="hidden"
                 id="modal-resume-upload"
-                onChange={(e) => {
+                onChange={async (e) => {
                   if (e.target.files && e.target.files[0]) {
-                    setResumeData({
-                      name: e.target.files[0].name,
-                      uploadDate: new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }),
-                      size: `${(e.target.files[0].size / 1024).toFixed(0)} KB`,
-                      exists: true
-                    });
-                    setReplaceResumeModalOpen(false);
-                    showToast('New resume uploaded successfully!');
+                    const file = e.target.files[0];
+                    try {
+                      showToast('Uploading resume and extracting information...');
+                      const res = await api.uploadResume(file, true);
+                      setResumeData({
+                        name: file.name,
+                        uploadDate: new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }),
+                        size: `${(file.size / 1024).toFixed(0)} KB`,
+                        exists: true,
+                        url: res.resume_url || null
+                      });
+
+                      if (res.extracted) {
+                        const ext = res.extracted;
+                        if (ext.name) setFullName(ext.name);
+                        if (ext.email) setEmail(ext.email);
+                        if (ext.phone) setPhoneNumber(ext.phone);
+                        if (ext.linkedin_url) setLinkedinUrl(ext.linkedin_url);
+                        if (ext.professional_summary) setSummary(ext.professional_summary);
+                        if (ext.skills && Array.isArray(ext.skills)) setSkillsList(ext.skills);
+                        if (ext.education && Array.isArray(ext.education)) setEducationList(ext.education);
+                        if (ext.work_history && Array.isArray(ext.work_history)) setExperienceList(ext.work_history);
+
+                        const stored = api.getStoredUser?.() || {};
+                        if (ext.name) stored.name = ext.name;
+                        if (ext.email) stored.email = ext.email;
+                        if (ext.phone) stored.phone = ext.phone;
+                        localStorage.setItem('stark_user', JSON.stringify(stored));
+                      }
+
+                      setReplaceResumeModalOpen(false);
+                      showToast('Resume uploaded and details auto-extracted successfully!');
+                    } catch (err) {
+                      console.error('Server resume upload error:', err);
+                      setResumeData({
+                        name: file.name,
+                        uploadDate: new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }),
+                        size: `${(file.size / 1024).toFixed(0)} KB`,
+                        exists: true
+                      });
+                      setReplaceResumeModalOpen(false);
+                      showToast('Resume updated: ' + (err.message || 'Saved locally'));
+                    }
                   }
                 }}
               />

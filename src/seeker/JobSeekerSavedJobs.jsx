@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import JobSeekerSidebar from './JobSeekerSidebar';
 import kavinAvatar from '../assets/kavin_avatar.jpg';
+import api from '../services/api';
 
 export default function JobSeekerSavedJobs({
   onLogout,
@@ -61,117 +62,107 @@ export default function JobSeekerSavedJobs({
   const [viewDetailsJob, setViewDetailsJob] = useState(null);
   const [removeJobConfirm, setRemoveJobConfirm] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3500);
   };
 
-  // Saved Jobs Dataset matching screenshot exactly
-  const [savedJobs, setSavedJobs] = useState([
-    {
-      id: 'saved-1',
-      title: 'Electrical Maintenance Technician',
-      company: 'South Coast Industries',
-      industry: 'Industrial Manufacturing',
-      location: 'Thoothukudi, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 18,000 – 25,000/month',
-      category: 'Technical / Maintenance',
-      accentColor: 'border-l-[#1976D2]', // Blue left border
-      logoText: 'SCI',
-      logoBg: 'bg-[#0A192F]',
-      logoColor: 'text-white',
-      status: 'Applied',
-      statusDate: 'Applied on Oct 14, 2026',
-      statusIcon: 'send',
-      statusPillBg: 'bg-blue-50 text-blue-700 border-blue-200',
-      description:
-        'We are looking for an Electrical Maintenance Technician to handle routine maintenance and repair of electrical systems and equipment.',
-      requirements: [
-        'ITI / Diploma in Electrical Engineering',
-        '1–3 years experience in plant maintenance',
-        'Familiarity with 3-phase circuits and panel safety'
-      ]
-    },
-    {
-      id: 'saved-2',
-      title: 'Junior Flutter Developer',
-      company: 'BlueKite Software',
-      industry: 'Software & Technology',
-      location: 'Tirunelveli, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 15,000 – 22,000/month',
-      category: 'IT / Software',
-      accentColor: 'border-l-[#10B981]', // Green left border
-      logoText: 'BK',
-      logoBg: 'bg-[#0080FF]',
-      logoColor: 'text-white',
-      status: 'Shortlisted',
-      statusDate: 'Applied on Oct 10, 2026',
-      statusIcon: 'check',
-      statusPillBg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      description:
-        'We are looking for a Junior Flutter Developer with good knowledge in Dart and Flutter to join our team.',
-      requirements: [
-        'B.Sc / BCA / B.Tech in Computer Science',
-        'Good understanding of Flutter widgets and state management',
-        'REST API integration and Git version control'
-      ]
-    },
-    {
-      id: 'saved-3',
-      title: 'Mathematics Teacher',
-      company: 'Bright Future Academy',
-      industry: 'Education & Academics',
-      location: 'Thoothukudi, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 12,000 – 18,000/month',
-      category: 'Education & Teaching',
-      accentColor: 'border-l-[#8B5CF6]', // Purple left border
-      logoIcon: 'book',
-      logoBg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      status: 'Interview',
-      statusDate: 'Applied on Sep 28, 2026',
-      statusIcon: 'calendar',
-      statusPillBg: 'bg-purple-50 text-purple-700 border-purple-200',
-      description:
-        'We are hiring a passionate Mathematics Teacher to teach high school students and help them build a strong foundation.',
-      requirements: [
-        'B.Sc / M.Sc Mathematics with B.Ed degree',
-        '1+ years high school teaching experience',
-        'Clear conceptual explanation ability in Tamil and English'
-      ]
-    },
-    {
-      id: 'saved-4',
-      title: 'Sales Executive',
-      company: 'Vetri Agencies',
-      industry: 'Wholesale & Distribution',
-      location: 'Thoothukudi, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 12,000 – 18,000/month',
-      category: 'Sales & Marketing',
-      accentColor: 'border-l-[#F43F5E]', // Red left border
-      logoType: 'swirl',
-      logoBg: 'bg-rose-50 text-rose-500 border-rose-200',
-      status: 'Rejected',
-      statusDate: 'Applied on Sep 20, 2026',
-      statusIcon: 'x',
-      statusPillBg: 'bg-rose-50 text-rose-700 border-rose-200',
-      description:
-        'We are looking for a Sales Executive to join our growing team and handle customer relations and sales activities.',
-      requirements: [
-        'Higher Secondary or Degree graduate',
-        'Valid 2-wheeler license for local merchant visits',
-        'High energy and persuasive negotiation attitude'
-      ]
-    }
-  ]);
+  // Saved Jobs State loaded dynamically from MySQL
+  const [savedJobs, setSavedJobs] = useState([]);
+
+  const fetchSavedJobs = () => {
+    setIsLoading(true);
+    api.getSavedJobs()
+      .then((res) => {
+        if (res && res.data) {
+          const colors = [
+            'border-l-[#1976D2]',
+            'border-l-[#10B981]',
+            'border-l-[#8B5CF6]',
+            'border-l-[#FFA000]',
+            'border-l-[#06B6D4]'
+          ];
+
+          const mapped = res.data.map((item, index) => {
+            const job = item.jobListing || item.job_listing || {};
+            const comp = job.company || {};
+            const cat = job.category || {};
+            const dist = job.district || {};
+
+            let reqs = [];
+            if (Array.isArray(job.requirements)) {
+              reqs = job.requirements;
+            } else if (typeof job.requirements === 'string') {
+              try {
+                const parsed = JSON.parse(job.requirements);
+                reqs = Array.isArray(parsed) ? parsed : [job.requirements];
+              } catch {
+                reqs = [job.requirements];
+              }
+            } else {
+              reqs = ['Relevant trade qualification or experience', 'Good communication & teamwork'];
+            }
+
+            const compName = comp.company_name || 'Verified Employer';
+            const initials = compName
+              .split(' ')
+              .filter(Boolean)
+              .map((w) => w[0])
+              .join('')
+              .slice(0, 3)
+              .toUpperCase() || 'ST';
+
+            return {
+              id: item.id,
+              realJobId: job.id,
+              title: job.title || 'Technical Specialist',
+              company: compName,
+              industry: comp.industry || 'Industrial & Manufacturing',
+              location: job.location || (dist.name ? `${dist.name}, TN` : 'Thoothukudi, TN'),
+              type: job.job_type || 'Full-time',
+              salary: job.salary_range || '₹18,000 – 25,000/month',
+              category: cat.name || 'Technical',
+              accentColor: colors[index % colors.length],
+              logoText: initials,
+              logoBg: 'bg-[#0A192F]',
+              logoColor: 'text-white',
+              status: 'Saved',
+              statusDate: item.created_at
+                ? `Saved on ${new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                : 'Recently Saved',
+              statusIcon: 'bookmark',
+              statusPillBg: 'bg-blue-50 text-blue-700 border-blue-200',
+              description: job.description || 'Job opening available for immediate joining.',
+              requirements: reqs
+            };
+          });
+          setSavedJobs(mapped);
+        }
+      })
+      .catch((err) => {
+        console.warn('Live saved jobs fetch:', err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
+  React.useEffect(() => {
+    fetchSavedJobs();
+  }, []);
 
   // Remove saved job
-  const handleRemoveSavedJob = (jobId) => {
+  const handleRemoveSavedJob = async (jobId) => {
     const job = savedJobs.find((j) => j.id === jobId);
+    if (job && job.realJobId) {
+      try {
+        await api.toggleSaveJob(job.realJobId);
+      } catch (err) {
+        console.warn('Error removing saved job:', err);
+      }
+    }
     setSavedJobs((prev) => prev.filter((j) => j.id !== jobId));
     setRemoveJobConfirm(null);
     showToast(`Removed "${job ? job.title : 'Job'}" from Saved Jobs`);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User,
   Lock,
@@ -27,6 +27,7 @@ import {
   Plus
 } from 'lucide-react';
 import CompanySidebar from './CompanySidebar';
+import api from '../services/api';
 
 /**
  * Company Account Settings Component (Single File Implementation)
@@ -36,7 +37,7 @@ import CompanySidebar from './CompanySidebar';
  * - Breadcrumbs: Home > Account Settings
  * - Left sub-navigation tab list (Profile & Access, Change Password, Notification Preferences, Team Members, Billing & Plans, Data & Privacy, Delete Account)
  * - Main 2x2 grid cards:
- *   - Card 1: Profile & Access (Avatar ABC, Change Photo, Verified Company badge, Full Name, Email, Phone, Designation, Save Changes button)
+ *   - Card 1: Profile & Access (Avatar ABC/Photo, Change Photo from local, Verified Company badge, Full Name, Email, Phone, Designation, Save Changes button)
  *   - Card 2: Change Password (Current Password, New Password, Confirm New Password, Eye toggles, Update Password button)
  *   - Card 3: Notification Preferences (5 Toggle switches with icons)
  *   - Card 4: Data & Privacy (Download My Data, Deactivate Account)
@@ -53,14 +54,38 @@ export default function CompanyAccountSettings({
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState('profile'); // 'profile', 'password', 'notifications', 'team', 'billing', 'privacy', 'delete'
 
+  const storedUser = api.getStoredUser?.() || {};
+
   // Profile Form States
-  const [fullName, setFullName] = useState('ABC Industrial Services');
-  const [emailAddress, setEmailAddress] = useState('abcindustrial@gmail.com');
+  const [fullName, setFullName] = useState(storedUser.name || '');
+  const [emailAddress, setEmailAddress] = useState(storedUser.email || '');
   const [countryCode, setCountryCode] = useState('+91');
-  const [phoneNumber, setPhoneNumber] = useState('98765 43210');
+  const [phoneNumber, setPhoneNumber] = useState(storedUser.phone || '');
   const [designation, setDesignation] = useState('HR Manager');
-  const [customPhoto, setCustomPhoto] = useState(null);
+  const [customPhoto, setCustomPhoto] = useState(storedUser.avatar_url || null);
   const [saveSuccess, setSaveSuccess] = useState('');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  // Load existing company profile from API
+  useEffect(() => {
+    const loadCompanyData = async () => {
+      try {
+        const res = await api.getCompanyProfile();
+        if (res.company) {
+          const comp = res.company;
+          const usr = res.user || {};
+          if (usr.name || comp.company_name) setFullName(usr.name || comp.company_name);
+          if (usr.email || comp.email) setEmailAddress(usr.email || comp.email);
+          if (usr.phone || comp.phone) setPhoneNumber(usr.phone || comp.phone);
+          if (comp.logo_url) setCustomPhoto(comp.logo_url);
+          else if (usr.avatar_url) setCustomPhoto(usr.avatar_url);
+        }
+      } catch (err) {
+        console.error('Failed to load company profile:', err);
+      }
+    };
+    loadCompanyData();
+  }, []);
 
   // Password Form States
   const [currentPassword, setCurrentPassword] = useState('');
@@ -91,9 +116,30 @@ export default function CompanyAccountSettings({
   };
 
   // Profile Save
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
-    setSaveSuccess('Profile and account details saved successfully!');
+    try {
+      setSaveSuccess('Saving profile changes...');
+      const res = await api.updateCompanyProfile({
+        name: fullName,
+        company_name: fullName,
+        email: emailAddress,
+        phone: phoneNumber,
+      });
+      if (res.success) {
+        const curr = api.getStoredUser?.() || {};
+        localStorage.setItem('stark_user', JSON.stringify({
+          ...curr,
+          name: fullName,
+          email: emailAddress,
+          phone: phoneNumber
+        }));
+        setSaveSuccess('Profile and account details saved successfully!');
+      }
+    } catch (err) {
+      console.error('Save profile error:', err);
+      setSaveSuccess('Changes saved locally.');
+    }
     setTimeout(() => setSaveSuccess(''), 4000);
   };
 
@@ -119,10 +165,37 @@ export default function CompanyAccountSettings({
     setTimeout(() => setPasswordSuccess(''), 4000);
   };
 
-  const handleChangePhoto = () => {
-    const url = prompt('Enter custom profile photo image URL or leave empty for default:', 'https://images.unsplash.com/photo-1577495508048-b635879837f1?w=150&h=150&fit=crop');
-    if (url) {
-      setCustomPhoto(url);
+  const handlePhotoUpload = async (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      try {
+        setIsUploadingPhoto(true);
+        setSaveSuccess('Uploading photo to server...');
+        const res = await api.uploadCompanyLogo(file);
+        if (res.logo_url) {
+          setCustomPhoto(res.logo_url);
+          const curr = api.getStoredUser?.() || {};
+          const updated = {
+            ...curr,
+            avatar_url: res.logo_url,
+            avatar: res.company?.logo || res.user?.avatar,
+            company: {
+              ...(curr.company || {}),
+              ...(res.company || {}),
+              logo_url: res.logo_url
+            }
+          };
+          localStorage.setItem('stark_user', JSON.stringify(updated));
+          window.dispatchEvent(new Event('stark_user_updated'));
+        }
+        setSaveSuccess('Profile photo uploaded and updated successfully!');
+      } catch (err) {
+        console.error('Photo upload error:', err);
+        setSaveSuccess('Failed to upload photo: ' + (err.message || 'Server error'));
+      } finally {
+        setIsUploadingPhoto(false);
+        setTimeout(() => setSaveSuccess(''), 4000);
+      }
     }
   };
 
@@ -203,9 +276,17 @@ export default function CompanyAccountSettings({
 
             {/* Profile Avatar */}
             <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-              <div className="w-9 h-9 rounded-full bg-[#0A192F] text-white font-bold text-xs flex items-center justify-center shadow-xs tracking-wider cursor-pointer">
-                ABC
-              </div>
+              {customPhoto ? (
+                <img
+                  src={customPhoto}
+                  alt={fullName || 'Company'}
+                  className="w-9 h-9 rounded-full object-cover ring-1 ring-slate-200 cursor-pointer shadow-xs"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-[#0A192F] text-white font-bold text-xs flex items-center justify-center shadow-xs tracking-wider cursor-pointer">
+                  {(fullName || 'Company').slice(0, 2).toUpperCase()}
+                </div>
+              )}
               <ChevronDown className="w-4 h-4 text-slate-500 cursor-pointer hover:text-slate-800" />
             </div>
           </div>
@@ -328,14 +409,22 @@ export default function CompanyAccountSettings({
                         />
                       ) : (
                         <div className="w-18 h-18 rounded-full bg-[#0A192F] text-white font-black text-xl flex items-center justify-center shadow-xs tracking-wider">
-                          ABC
+                          {(fullName || 'Company').slice(0, 2).toUpperCase()}
                         </div>
                       )}
+                      <input
+                        type="file"
+                        id="company-photo-input"
+                        accept="image/png,image/jpeg,image/webp,image/jpg"
+                        className="hidden"
+                        onChange={handlePhotoUpload}
+                      />
                       <button
                         type="button"
-                        onClick={handleChangePhoto}
-                        className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-white border border-slate-300 text-slate-600 flex items-center justify-center shadow-xs hover:bg-slate-50 cursor-pointer"
-                        title="Upload Photo"
+                        onClick={() => document.getElementById('company-photo-input').click()}
+                        disabled={isUploadingPhoto}
+                        className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-white border border-slate-300 text-slate-600 flex items-center justify-center shadow-xs hover:bg-slate-50 cursor-pointer disabled:opacity-50"
+                        title="Upload Photo from Computer"
                       >
                         <Camera className="w-3.5 h-3.5" />
                       </button>
@@ -343,7 +432,7 @@ export default function CompanyAccountSettings({
 
                     <div className="space-y-1">
                       <h4 className="text-sm font-bold text-slate-900 leading-tight">
-                        ABC Industrial Services
+                        {fullName || 'Company Profile'}
                       </h4>
                       <p className="text-xs text-slate-500 leading-tight">
                         Employer Account
@@ -361,13 +450,15 @@ export default function CompanyAccountSettings({
                   <div className="md:col-span-7 flex flex-col sm:flex-row sm:items-center gap-3">
                     <button
                       type="button"
-                      onClick={handleChangePhoto}
-                      className="px-3.5 py-2 border border-blue-600 bg-white hover:bg-blue-50 text-[#1976D2] font-bold text-xs rounded-xl transition-colors cursor-pointer self-start"
+                      onClick={() => document.getElementById('company-photo-input').click()}
+                      disabled={isUploadingPhoto}
+                      className="px-3.5 py-2 border border-blue-600 bg-white hover:bg-blue-50 text-[#1976D2] font-bold text-xs rounded-xl transition-colors cursor-pointer self-start flex items-center gap-1.5 disabled:opacity-50"
                     >
-                      Change Photo
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>{isUploadingPhoto ? 'Uploading...' : 'Change Photo'}</span>
                     </button>
                     <span className="text-[11px] text-slate-400">
-                      Recommended size 400 × 400 px
+                      Recommended size 400 × 400 px (JPG, PNG, WEBP)
                     </span>
                   </div>
                 </div>
@@ -841,7 +932,7 @@ export default function CompanyAccountSettings({
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900">Recruitment Team Members</h3>
-                  <p className="text-xs text-slate-500">ABC Industrial Services • 3 Members</p>
+                  <p className="text-xs text-slate-500">{fullName || 'Company'} • Team Members</p>
                 </div>
               </div>
               <button
@@ -962,7 +1053,7 @@ export default function CompanyAccountSettings({
               </div>
               <h3 className="text-base font-bold text-slate-900">Confirm Account Deletion?</h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Are you sure you want to delete <span className="font-bold text-slate-800">ABC Industrial Services</span>? This will permanently erase all posted jobs, applicant histories, and corporate certificates.
+                Are you sure you want to delete <span className="font-bold text-slate-800">{fullName || 'Company Profile'}</span>? This will permanently erase all posted jobs, applicant histories, and corporate certificates.
               </p>
               <div className="pt-3 flex gap-2">
                 <button

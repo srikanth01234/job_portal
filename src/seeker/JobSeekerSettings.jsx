@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User,
   Bell,
@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import JobSeekerSidebar from './JobSeekerSidebar';
 import kavinAvatar from '../assets/kavin_avatar.jpg';
+import api from '../services/api';
 
 export default function JobSeekerSettings({
   onLogout,
@@ -46,13 +47,32 @@ export default function JobSeekerSettings({
   const [activeSubTab, setActiveSubTab] = useState('account'); // 'account', 'notifications', 'job-pref', 'privacy', 'password', 'delete'
 
   // Account Form States
-  const [fullName, setFullName] = useState('Kavin Raj');
+  const [fullName, setFullName] = useState('Candidate');
   const [dob, setDob] = useState('12 Mar 2000');
-  const [email, setEmail] = useState('kavinraj@gmail.com');
+  const [email, setEmail] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
-  const [phoneNumber, setPhoneNumber] = useState('98765 43210');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [gender, setGender] = useState('Male');
   const [currentLocation, setCurrentLocation] = useState('Thoothukudi, Tamil Nadu');
+  const [avatarUrl, setAvatarUrl] = useState(null);
+
+  // Fetch candidate profile from API on mount
+  useEffect(() => {
+    let isMounted = true;
+    api.getSeekerProfile()
+      .then((res) => {
+        if (res && res.user && isMounted) {
+          if (res.user.name) setFullName(res.user.name);
+          if (res.user.email) setEmail(res.user.email);
+          if (res.user.phone) setPhoneNumber(res.user.phone);
+          if (res.profile?.current_location) setCurrentLocation(res.profile.current_location);
+          const av = res.user.avatar_url || (res.user.avatar ? (res.user.avatar.startsWith('http') ? res.user.avatar : `http://127.0.0.1:8000/storage/${res.user.avatar}`) : null);
+          if (av) setAvatarUrl(av);
+        }
+      })
+      .catch((err) => console.warn('Could not load seeker settings profile:', err));
+    return () => { isMounted = false; };
+  }, []);
 
   // Notification Preferences Toggles
   const [notifPreferences, setNotifPreferences] = useState({
@@ -106,9 +126,49 @@ export default function JobSeekerSettings({
     showToast('Notification preference updated');
   };
 
-  const handleSaveAccount = (e) => {
-    e.preventDefault();
-    showToast('Account details saved successfully!');
+  const handleSaveAccount = async (e) => {
+    if (e) e.preventDefault();
+    try {
+      const res = await api.updateSeekerProfile({
+        name: fullName,
+        email: email,
+        phone: phoneNumber,
+        current_location: currentLocation,
+      });
+      if (res && res.user) {
+        const stored = api.getStoredUser?.() || {};
+        stored.name = res.user.name;
+        stored.email = res.user.email;
+        stored.phone = res.user.phone;
+        localStorage.setItem('stark_user', JSON.stringify(stored));
+        window.dispatchEvent(new Event('stark_user_updated'));
+      }
+      showToast('Account details saved successfully!');
+    } catch (err) {
+      showToast('Failed to save account: ' + (err.message || 'Error'));
+    }
+  };
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      showToast('Uploading profile photo...');
+      const res = await api.uploadAvatar(file);
+      if (res && res.avatar_url) {
+        setAvatarUrl(res.avatar_url);
+        const stored = api.getStoredUser?.() || {};
+        stored.avatar = res.user?.avatar;
+        stored.avatar_url = res.avatar_url;
+        localStorage.setItem('stark_user', JSON.stringify(stored));
+        window.dispatchEvent(new Event('stark_user_updated'));
+      }
+      showToast('Profile photo updated successfully!');
+    } catch (err) {
+      console.error('Avatar upload failed:', err);
+      setAvatarUrl(URL.createObjectURL(file));
+      showToast('Saved locally: ' + (err.message || 'Updated'));
+    }
   };
 
   const handleUpdatePassword = (e) => {
@@ -386,8 +446,8 @@ export default function JobSeekerSettings({
                       <div className="flex items-center gap-5">
                         <div className="relative">
                           <img
-                            src={kavinAvatar}
-                            alt="Kavin Raj"
+                            src={avatarUrl || kavinAvatar}
+                            alt={fullName}
                             className="w-20 h-20 rounded-full object-cover shadow-sm ring-2 ring-slate-100"
                           />
                           <label
@@ -400,7 +460,7 @@ export default function JobSeekerSettings({
                               type="file"
                               accept="image/*"
                               className="hidden"
-                              onChange={() => showToast('Photo updated successfully!')}
+                              onChange={handleAvatarUpload}
                             />
                           </label>
                         </div>

@@ -13,8 +13,13 @@ class JobController extends Controller
      */
     public function index(Request $request)
     {
-        $query = JobListing::with(['company', 'category', 'district'])
-            ->where('status', 'active');
+        $query = JobListing::with(['company', 'category', 'district']);
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        } elseif (!$request->filled('status')) {
+            $query->where('status', 'active');
+        }
 
         // Keyword Search (Title or Description)
         if ($request->filled('search')) {
@@ -109,21 +114,33 @@ class JobController extends Controller
      */
     public function store(Request $request)
     {
-        $user = $request->user();
-        $company = $user?->company;
+        $user = auth('sanctum')->user() ?? $request->user();
+        $company = null;
 
+        // 1. Resolve by authenticated user's company relation or user_id
+        if ($user) {
+            $company = $user->company ?? \App\Models\Company::where('user_id', $user->id)->first();
+        }
+
+        // 2. Resolve by explicitly passed company_id from client
+        if (!$company && $request->filled('company_id')) {
+            $company = \App\Models\Company::find($request->company_id);
+        }
+
+        // 3. If authenticated user is a company but lacks a profile record, create one
+        if (!$company && $user && $user->role === 'company') {
+            $company = \App\Models\Company::create([
+                'user_id' => $user->id,
+                'company_name' => $user->name ?? 'Company Portal',
+                'slug' => \Illuminate\Support\Str::slug($user->name ?? 'company') . '-' . uniqid(),
+                'industry' => 'Industrial Manufacturing',
+                'verification_status' => 'verified',
+            ]);
+        }
+
+        // 4. Fallback if called anonymously in development
         if (!$company) {
-            $company = \App\Models\Company::first();
-            if (!$company) {
-                $defaultUser = \App\Models\User::where('role', 'company')->first() ?? \App\Models\User::first();
-                $company = \App\Models\Company::create([
-                    'user_id' => $defaultUser->id,
-                    'company_name' => $request->company_name ?? 'ABC Industrial Services',
-                    'slug' => 'company-' . uniqid(),
-                    'industry' => 'Industrial Manufacturing',
-                    'verification_status' => 'verified',
-                ]);
-            }
+            $company = \App\Models\Company::where('user_id', '!=', 1)->first() ?? \App\Models\Company::first();
         }
 
         $request->validate([
@@ -138,6 +155,44 @@ class JobController extends Controller
             ?? \App\Models\District::where('name', 'like', "%{$request->location}%")->first()
             ?? \App\Models\District::first();
 
+        // Parse salary range if passed as string (e.g. "₹20,000 - ₹28,000/mo")
+        $minSalary = $request->min_salary;
+        $maxSalary = $request->max_salary;
+        if (!$minSalary && $request->filled('salary')) {
+            preg_match_all('/\d[\d,]*/', $request->salary, $matches);
+            if (!empty($matches[0])) {
+                $nums = array_map(fn($v) => (float)str_replace(',', '', $v), $matches[0]);
+                $minSalary = $nums[0] ?? 18000;
+                $maxSalary = $nums[1] ?? ($minSalary * 1.35);
+            }
+        }
+
+        // Requirements parsing (support array or multiline text)
+        $requirements = $request->requirements;
+        if (is_string($requirements)) {
+            $lines = array_filter(array_map('trim', preg_split('/[\r\n]+/', $requirements)));
+            $requirements = !empty($lines) ? array_values($lines) : [$requirements];
+        }
+        if (empty($requirements)) {
+            $requirements = [
+                'Relevant trade qualification or technical background.',
+                'Good work ethic and adherence to safety protocols.'
+            ];
+        }
+
+        // Responsibilities parsing (support array or multiline text)
+        $responsibilities = $request->responsibilities;
+        if (is_string($responsibilities)) {
+            $lines = array_filter(array_map('trim', preg_split('/[\r\n]+/', $responsibilities)));
+            $responsibilities = !empty($lines) ? array_values($lines) : [$responsibilities];
+        }
+        if (empty($responsibilities)) {
+            $responsibilities = [
+                'Perform assigned operational duties according to specifications.',
+                'Adhere to factory safety protocols and maintenance standards.'
+            ];
+        }
+
         $job = JobListing::create([
             'company_id' => $company->id,
             'title' => $request->title,
@@ -145,19 +200,13 @@ class JobController extends Controller
             'district_id' => $district?->id,
             'location' => $request->location ?? 'Thoothukudi, TN',
             'job_type' => $request->job_type ?? 'Full-time',
-            'min_salary' => $request->min_salary ?? 18000,
-            'max_salary' => $request->max_salary ?? 25000,
+            'min_salary' => $minSalary ?? 18000,
+            'max_salary' => $maxSalary ?? 25000,
             'experience' => $request->experience ?? '1-3 Years',
-            'openings' => $request->openings ?? 1,
+            'openings' => (int)($request->openings ?? 1),
             'description' => $request->description ?? "Job opportunity for {$request->title} at {$company->company_name}.",
-            'responsibilities' => $request->responsibilities ?? [
-                'Perform assigned operational duties according to specifications.',
-                'Adhere to factory safety protocols and maintenance standards.'
-            ],
-            'requirements' => $request->requirements ?? [
-                'Relevant trade qualification or experience.',
-                'Good technical understanding and problem solving ability.'
-            ],
+            'responsibilities' => $responsibilities,
+            'requirements' => $requirements,
             'status' => 'active',
             'expires_at' => now()->addDays(30),
         ]);
@@ -165,7 +214,8 @@ class JobController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Job posted successfully',
-            'job' => $job->load(['category', 'district']),
+            'job' => $job->load(['category', 'district', 'company']),
+            'data' => $job->load(['category', 'district', 'company']),
         ], 201);
     }
 

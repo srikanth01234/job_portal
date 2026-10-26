@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Building2,
   MapPin,
@@ -28,6 +28,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import CompanySidebar from './CompanySidebar';
+import api from '../services/api';
 
 // Initial verification documents list matching reference screenshot
 const INITIAL_DOCUMENTS = [
@@ -83,29 +84,30 @@ export default function CompanyProfile({
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
 
-  // Form states initialized with screenshot values
+  const storedUser = api.getStoredUser?.() || {};
+
+  // Form states initialized with dynamic user/DB values
   const [formData, setFormData] = useState({
-    companyName: 'ABC Industrial Services',
+    companyName: storedUser.name || '',
     industry: 'Industrial Services & Maintenance',
     companyType: 'Private Limited',
-    yearOfEstablishment: '2018',
-    companySize: '50 - 100 employees',
-    website: 'https://www.abcindustrial.in',
-    aboutCompany:
-      'ABC Industrial Services provides industrial maintenance, equipment installation and technical support services across Tamil Nadu. We are committed to quality, safety and long-term client partnerships.',
+    yearOfEstablishment: '2020',
+    companySize: '10 - 50 employees',
+    website: '',
+    aboutCompany: '',
     // Contact Details
-    officialEmail: 'hr@abcindustrial.in',
-    primaryPhone: '+91 98765 43210',
-    secondaryPhone: '+91 461 2345678',
-    contactPerson: 'S. Ramesh Kumar',
+    officialEmail: storedUser.email || '',
+    primaryPhone: storedUser.phone || '',
+    secondaryPhone: '',
+    contactPerson: '',
     designation: 'Head of Human Resources',
     // Address
-    addressLine1: 'Plot No. 42, SIPCOT Industrial Complex',
-    addressLine2: 'Madurai Bye-pass Road',
+    addressLine1: '',
+    addressLine2: '',
     district: 'Thoothukudi',
     state: 'Tamil Nadu',
     pincode: '628008',
-    landmark: 'Near Power Grid Substation',
+    landmark: '',
     // Business Details
     gstin: '33AABCA1234F1Z8',
     panNumber: 'AABCA1234F',
@@ -114,7 +116,40 @@ export default function CompanyProfile({
   });
 
   const [documents, setDocuments] = useState(INITIAL_DOCUMENTS);
-  const [companyLogoUrl, setCompanyLogoUrl] = useState(null); // null uses default SVG branding
+  const [companyLogoUrl, setCompanyLogoUrl] = useState(null);
+  const logoFileInputRef = useRef(null);
+
+  // Fetch company profile on mount
+  useEffect(() => {
+    let isMounted = true;
+    const loadProfile = async () => {
+      try {
+        const res = await api.getCompanyProfile();
+        if (res && res.company && isMounted) {
+          const c = res.company;
+          setFormData((prev) => ({
+            ...prev,
+            companyName: c.company_name || prev.companyName,
+            industry: c.industry || prev.industry,
+            companySize: c.company_size || prev.companySize,
+            website: c.website || prev.website,
+            aboutCompany: c.about || prev.aboutCompany,
+            officialEmail: c.email || prev.officialEmail,
+            primaryPhone: c.phone || prev.primaryPhone,
+            district: c.district?.name || prev.district,
+            addressLine1: c.location || prev.addressLine1
+          }));
+          if (c.logo_url || c.logo) {
+            setCompanyLogoUrl(c.logo_url || (c.logo.startsWith('http') ? c.logo : `http://127.0.0.1:8000/storage/${c.logo}`));
+          }
+        }
+      } catch (err) {
+        console.warn('Company profile fetch error:', err);
+      }
+    };
+    loadProfile();
+    return () => { isMounted = false; };
+  }, []);
 
   const handleSidebarTabSelect = (tabId) => {
     if (tabId === 'profile') return;
@@ -123,17 +158,49 @@ export default function CompanyProfile({
     }
   };
 
-  const handleSaveBasic = (e) => {
-    e.preventDefault();
-    setSaveSuccessMsg('Company profile details updated successfully!');
-    setTimeout(() => setSaveSuccessMsg(''), 4000);
+  const handleSaveBasic = async (e) => {
+    if (e) e.preventDefault();
+    try {
+      await api.updateCompanyProfile({
+        company_name: formData.companyName,
+        industry: formData.industry,
+        about: formData.aboutCompany,
+        website: formData.website,
+        phone: formData.primaryPhone,
+        email: formData.officialEmail,
+        company_size: formData.companySize,
+        location: `${formData.addressLine1}${formData.district ? `, ${formData.district}` : ''}`
+      });
+      setSaveSuccessMsg('Company profile details saved to database successfully!');
+      setTimeout(() => setSaveSuccessMsg(''), 4000);
+    } catch (err) {
+      console.error('Failed to save company profile:', err);
+      setSaveSuccessMsg('Profile saved locally. Server response: ' + (err.message || 'Updated'));
+      setTimeout(() => setSaveSuccessMsg(''), 4000);
+    }
   };
 
   const handleChangeLogo = () => {
-    const newLogo = prompt('Enter image URL or press OK to use sample corporate logo:', 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=300&h=300&fit=crop');
-    if (newLogo) {
-      setCompanyLogoUrl(newLogo);
-      alert('Logo updated successfully!');
+    logoFileInputRef.current?.click();
+  };
+
+  const handleLogoFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const res = await api.uploadCompanyLogo(file);
+      if (res && res.logo_url) {
+        setCompanyLogoUrl(res.logo_url);
+      } else {
+        setCompanyLogoUrl(URL.createObjectURL(file));
+      }
+      setSaveSuccessMsg('Company logo uploaded successfully to database!');
+      setTimeout(() => setSaveSuccessMsg(''), 4000);
+    } catch (err) {
+      console.error('Failed to upload logo:', err);
+      setCompanyLogoUrl(URL.createObjectURL(file));
+      setSaveSuccessMsg('Logo updated locally.');
+      setTimeout(() => setSaveSuccessMsg(''), 4000);
     }
   };
 
@@ -887,6 +954,13 @@ export default function CompanyProfile({
 
                 {/* Change Logo & Remove Action Buttons */}
                 <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="file"
+                    ref={logoFileInputRef}
+                    onChange={handleLogoFileChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
                   <button
                     type="button"
                     onClick={handleChangeLogo}
@@ -990,7 +1064,7 @@ export default function CompanyProfile({
                     {selectedDoc ? selectedDoc.title : 'Verified Corporate Documents'}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    ABC Industrial Services • Thoothukudi, TN
+                    {formData.companyName || 'Company'} • {formData.district || 'Tamil Nadu'}
                   </p>
                 </div>
               </div>

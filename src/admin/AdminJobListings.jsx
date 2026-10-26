@@ -40,7 +40,7 @@ export default function AdminJobListings({ onLogout, onNavigateHome, onNavigateT
   const [selectedJob, setSelectedJob] = useState(null);
 
   React.useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/jobs')
+    fetch('http://127.0.0.1:8000/api/jobs?status=all&per_page=100')
       .then(res => res.json())
       .then(data => {
         if (data && data.data) {
@@ -48,13 +48,14 @@ export default function AdminJobListings({ onLogout, onNavigateHome, onNavigateT
             id: j.id,
             title: j.title,
             company: j.company?.company_name || 'Direct Employer',
+            companyLogo: j.company?.logo_url || (j.company?.logo ? (j.company.logo.startsWith('http') ? j.company.logo : `http://127.0.0.1:8000/storage/${j.company.logo}`) : null),
             companyLogoBg: 'bg-slate-900 text-white font-black',
             companyLogoText: (j.company?.company_name || 'DE').slice(0, 2).toUpperCase(),
             location: j.location || (j.district ? `${j.district.name}, Tamil Nadu` : 'Tamil Nadu'),
             district: j.district?.name || 'Thoothukudi',
             jobType: j.job_type || 'Full-time',
             vacancies: j.openings || 1,
-            status: j.status === 'active' ? 'Active' : 'Closed',
+            status: j.status === 'active' ? 'Active' : (j.status === 'pending' || j.status === 'pending_review' ? 'Pending Review' : (j.status === 'rejected' ? 'Rejected' : 'Closed')),
             postedTimeAgo: 'Recently',
             postedDate: new Date(j.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
             salary: j.min_salary && j.max_salary ? `₹${Number(j.min_salary).toLocaleString()} - ₹${Number(j.max_salary).toLocaleString()}` : 'Negotiable',
@@ -71,6 +72,13 @@ export default function AdminJobListings({ onLogout, onNavigateHome, onNavigateT
       })
       .catch(err => console.warn('Could not fetch jobs:', err));
   }, []);
+
+  // Dynamic job counts
+  const countAllJobs = jobs.length;
+  const countActiveJobs = jobs.filter((j) => j.status === 'Active').length;
+  const countPendingJobs = jobs.filter((j) => j.status === 'Pending Review').length;
+  const countRejectedJobs = jobs.filter((j) => j.status === 'Rejected').length;
+  const countClosedJobs = jobs.filter((j) => j.status === 'Closed').length;
   const [showDetailPanel, setShowDetailPanel] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
@@ -448,9 +456,9 @@ export default function AdminJobListings({ onLogout, onNavigateHome, onNavigateT
               <div className="min-w-0">
                 <span className="text-xs font-semibold text-slate-500 block truncate">Total Jobs</span>
                 <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none mt-0.5">
-                  428
+                  {countAllJobs}
                 </div>
-                <span className="text-[11px] font-bold text-emerald-600 block mt-1">↗ +12% vs last month</span>
+                <span className="text-[11px] font-bold text-emerald-600 block mt-1">Live Database</span>
               </div>
             </div>
 
@@ -467,9 +475,11 @@ export default function AdminJobListings({ onLogout, onNavigateHome, onNavigateT
               <div className="min-w-0">
                 <span className="text-xs font-semibold text-slate-500 block truncate">Active</span>
                 <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none mt-0.5">
-                  312
+                  {countActiveJobs}
                 </div>
-                <span className="text-[11px] font-medium text-slate-400 block mt-1">73% of total</span>
+                <span className="text-[11px] font-medium text-slate-400 block mt-1">
+                  {countAllJobs > 0 ? `${Math.round((countActiveJobs / countAllJobs) * 100)}% of total` : '0% of total'}
+                </span>
               </div>
             </div>
 
@@ -486,9 +496,11 @@ export default function AdminJobListings({ onLogout, onNavigateHome, onNavigateT
               <div className="min-w-0">
                 <span className="text-xs font-semibold text-slate-500 block truncate">Pending Review</span>
                 <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none mt-0.5">
-                  46
+                  {countPendingJobs}
                 </div>
-                <span className="text-[11px] font-medium text-amber-600 block mt-1">11% of total</span>
+                <span className="text-[11px] font-medium text-amber-600 block mt-1">
+                  {countAllJobs > 0 ? `${Math.round((countPendingJobs / countAllJobs) * 100)}% of total` : '0% of total'}
+                </span>
               </div>
             </div>
 
@@ -505,9 +517,11 @@ export default function AdminJobListings({ onLogout, onNavigateHome, onNavigateT
               <div className="min-w-0">
                 <span className="text-xs font-semibold text-slate-500 block truncate">Rejected</span>
                 <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none mt-0.5">
-                  42
+                  {countRejectedJobs}
                 </div>
-                <span className="text-[11px] font-medium text-slate-400 block mt-1">10% of total</span>
+                <span className="text-[11px] font-medium text-slate-400 block mt-1">
+                  {countAllJobs > 0 ? `${Math.round((countRejectedJobs / countAllJobs) * 100)}% of total` : '0% of total'}
+                </span>
               </div>
             </div>
 
@@ -524,9 +538,11 @@ export default function AdminJobListings({ onLogout, onNavigateHome, onNavigateT
               <div className="min-w-0">
                 <span className="text-xs font-semibold text-slate-500 block truncate">Closed / Expired</span>
                 <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none mt-0.5">
-                  28
+                  {countClosedJobs}
                 </div>
-                <span className="text-[11px] font-medium text-slate-400 block mt-1">6% of total</span>
+                <span className="text-[11px] font-medium text-slate-400 block mt-1">
+                  {countAllJobs > 0 ? `${Math.round((countClosedJobs / countAllJobs) * 100)}% of total` : '0% of total'}
+                </span>
               </div>
             </div>
 
@@ -551,7 +567,7 @@ export default function AdminJobListings({ onLogout, onNavigateHome, onNavigateT
                   }`}
                 >
                   <span>All Jobs</span>
-                  <span className={statusFilter === 'All' ? 'opacity-90' : 'text-slate-400'}>428</span>
+                  <span className={statusFilter === 'All' ? 'opacity-90' : 'text-slate-400'}>{countAllJobs}</span>
                 </button>
 
                 <button
@@ -564,7 +580,7 @@ export default function AdminJobListings({ onLogout, onNavigateHome, onNavigateT
                   }`}
                 >
                   <span>Active</span>
-                  <span>312</span>
+                  <span>{countActiveJobs}</span>
                 </button>
 
                 <button
@@ -577,7 +593,7 @@ export default function AdminJobListings({ onLogout, onNavigateHome, onNavigateT
                   }`}
                 >
                   <span>Pending Review</span>
-                  <span>46</span>
+                  <span>{countPendingJobs}</span>
                 </button>
 
                 <button
@@ -590,7 +606,7 @@ export default function AdminJobListings({ onLogout, onNavigateHome, onNavigateT
                   }`}
                 >
                   <span>Rejected</span>
-                  <span>42</span>
+                  <span>{countRejectedJobs}</span>
                 </button>
 
                 <button
@@ -603,7 +619,7 @@ export default function AdminJobListings({ onLogout, onNavigateHome, onNavigateT
                   }`}
                 >
                   <span>Closed</span>
-                  <span>28</span>
+                  <span>{countClosedJobs}</span>
                 </button>
               </div>
 
@@ -735,9 +751,17 @@ export default function AdminJobListings({ onLogout, onNavigateHome, onNavigateT
                         <div>
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-3">
-                              <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xs flex-shrink-0 shadow-2xs ${job.companyLogoBg}`}>
-                                {job.companyLogoText}
-                              </div>
+                              {job.companyLogo ? (
+                                <img
+                                  src={job.companyLogo}
+                                  alt={job.company}
+                                  className="w-11 h-11 rounded-xl object-contain bg-white p-1 border border-slate-200 flex-shrink-0 shadow-2xs"
+                                />
+                              ) : (
+                                <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xs flex-shrink-0 shadow-2xs ${job.companyLogoBg}`}>
+                                  {job.companyLogoText}
+                                </div>
+                              )}
                               <div className="min-w-0">
                                 <span className="text-xs text-slate-500 font-semibold block truncate">
                                   {job.company}
@@ -929,9 +953,17 @@ export default function AdminJobListings({ onLogout, onNavigateHome, onNavigateT
 
                 {/* Company & Job Header */}
                 <div className="flex items-start gap-3.5 pr-8">
-                  <div className={`w-13 h-13 rounded-2xl flex items-center justify-center text-sm flex-shrink-0 shadow-sm ${selectedJob.companyLogoBg}`}>
-                    {selectedJob.companyLogoText}
-                  </div>
+                  {selectedJob.companyLogo ? (
+                    <img
+                      src={selectedJob.companyLogo}
+                      alt={selectedJob.company}
+                      className="w-13 h-13 rounded-2xl object-contain bg-white p-1 border border-slate-200 flex-shrink-0 shadow-sm"
+                    />
+                  ) : (
+                    <div className={`w-13 h-13 rounded-2xl flex items-center justify-center text-sm flex-shrink-0 shadow-sm ${selectedJob.companyLogoBg}`}>
+                      {selectedJob.companyLogoText}
+                    </div>
+                  )}
                   <div>
                     <h3 className="font-extrabold text-slate-900 text-base">
                       {selectedJob.company}

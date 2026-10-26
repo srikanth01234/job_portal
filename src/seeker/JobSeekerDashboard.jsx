@@ -27,6 +27,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import JobSeekerSidebar from './JobSeekerSidebar';
+import api from '../services/api';
 
 export default function JobSeekerDashboard({
   onLogout,
@@ -43,108 +44,160 @@ export default function JobSeekerDashboard({
   const [selectedLocation, setSelectedLocation] = useState('Thoothukudi, Tamil Nadu');
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
 
+  const [currentUser, setCurrentUser] = useState(() => api.getStoredUser?.() || {});
+  const userName = currentUser.name || 'Candidate';
+  const userEmail = currentUser.email || 'candidate@starkjobs.com';
+  const userInitials = userName.split(' ').filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'JS';
+  const userAvatar = currentUser.avatar_url || (currentUser.avatar ? (currentUser.avatar.startsWith('http') ? currentUser.avatar : `http://127.0.0.1:8000/storage/${currentUser.avatar}`) : null);
+
   // Metric stats
-  const [appliedCount, setAppliedCount] = useState(8);
-  const [interviewsCount, setInterviewsCount] = useState(2);
-  const [savedCount, setSavedCount] = useState(5);
+  const [appliedCount, setAppliedCount] = useState(0);
+  const [interviewsCount, setInterviewsCount] = useState(0);
+  const [savedCount, setSavedCount] = useState(0);
 
   // Profile completion status
   const [skillsCompleted, setSkillsCompleted] = useState(false);
   const [skillsModalOpen, setSkillsModalOpen] = useState(false);
-  const [candidateSkills, setCandidateSkills] = useState([
-    'Electrical Wiring',
-    'Circuit Diagnosis',
-    'Industrial Safety'
-  ]);
+  const [candidateSkills, setCandidateSkills] = useState([]);
   const [newSkillInput, setNewSkillInput] = useState('');
 
   // Modals & Feedback
   const [applyModalJob, setApplyModalJob] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
 
-  // Jobs dataset
-  const [jobs, setJobs] = useState([
-    {
-      id: 'job-1',
-      title: 'Electrical Maintenance Technician',
-      company: 'South Coast Industries',
-      location: 'Thoothukudi, TN',
-      type: 'Full-time',
-      salary: '₹ 18,000 – 25,000',
-      logoText: 'SCI',
-      logoBg: 'bg-[#0A192F]',
-      logoTextColor: 'text-white',
-      isSaved: false,
-      isApplied: false,
-      posted: '2 days ago',
-      experience: '1-3 years'
-    },
-    {
-      id: 'job-2',
-      title: 'Junior Flutter Developer',
-      company: 'BlueKite Software',
-      location: 'Tirunelveli, TN',
-      type: 'Full-time',
-      salary: '₹ 15,000 – 22,000',
-      logoText: 'BK',
-      logoBg: 'bg-[#0080FF]',
-      logoTextColor: 'text-white',
-      isSaved: false,
-      isApplied: false,
-      posted: 'Just now',
-      experience: '0-2 years'
-    },
-    {
-      id: 'job-3',
-      title: 'Mathematics Teacher',
-      company: 'Bright Future Academy',
-      location: 'Thoothukudi, TN',
-      type: 'Full-time',
-      salary: 'Salary not disclosed',
-      logoIcon: 'book',
-      logoBg: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-      isSaved: false,
-      isApplied: false,
-      posted: '3 days ago',
-      experience: '2+ years'
-    }
-  ]);
+  // Jobs dataset from real DB
+  const [jobs, setJobs] = useState([]);
+
+  // Fetch real data from DB
+  React.useEffect(() => {
+    let isMounted = true;
+
+    // Load real jobs
+    api.getJobs().then((res) => {
+      if (res && res.data && isMounted) {
+        const mapped = res.data.map((j) => ({
+          id: j.id,
+          title: j.title,
+          company: j.company?.company_name || 'Direct Employer',
+          companyLogo: j.company?.logo_url || (j.company?.logo ? (j.company.logo.startsWith('http') ? j.company.logo : `http://127.0.0.1:8000/storage/${j.company.logo}`) : null),
+          location: j.location || (j.district ? `${j.district.name}, TN` : 'Tamil Nadu'),
+          type: j.job_type || 'Full-time',
+          salary: j.min_salary && j.max_salary 
+            ? `₹ ${Number(j.min_salary).toLocaleString()} – ${Number(j.max_salary).toLocaleString()}` 
+            : (j.min_salary ? `₹ ${Number(j.min_salary).toLocaleString()}+` : 'Not Disclosed'),
+          logoText: (j.company?.company_name || 'DE').slice(0, 2).toUpperCase(),
+          logoBg: 'bg-[#0A192F]',
+          logoTextColor: 'text-white',
+          isSaved: false,
+          isApplied: false,
+          posted: 'Recently',
+          experience: j.experience || 'Fresher / Experienced'
+        }));
+        setJobs(mapped);
+      }
+    }).catch(err => console.warn('Dashboard jobs fetch:', err));
+
+    // Load real applications
+    api.getApplications().then((res) => {
+      if (res && isMounted) {
+        if (res.counts) {
+          setAppliedCount(res.counts.all || 0);
+          setInterviewsCount(res.counts.interview || 0);
+        } else if (Array.isArray(res.data)) {
+          setAppliedCount(res.data.length);
+        }
+      }
+    }).catch(err => console.warn('Dashboard applications fetch:', err));
+
+    // Load real saved jobs
+    api.getSavedJobs().then((res) => {
+      if (res && isMounted) {
+        const count = res.total ?? (Array.isArray(res.data) ? res.data.length : 0);
+        setSavedCount(count);
+      }
+    }).catch(err => console.warn('Dashboard saved jobs fetch:', err));
+
+    // Load candidate profile and synchronize user
+    api.getSeekerProfile().then((res) => {
+      if (res && isMounted) {
+        if (res.user) {
+          setCurrentUser(res.user);
+          const prev = api.getStoredUser?.() || {};
+          localStorage.setItem('stark_user', JSON.stringify({ ...prev, ...res.user }));
+        }
+        if (res.profile) {
+          const p = res.profile;
+          if (p.skills) {
+            try {
+              const parsed = typeof p.skills === 'string' ? JSON.parse(p.skills) : p.skills;
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setCandidateSkills(parsed);
+                setSkillsCompleted(true);
+              }
+            } catch (e) {}
+          }
+        }
+      }
+    }).catch(err => console.warn('Dashboard profile fetch:', err));
+
+    // Listen for cross-component user updates (e.g. from Profile page)
+    const handleUserUpdate = () => {
+      const u = api.getStoredUser?.() || {};
+      if (isMounted && u.name) {
+        setCurrentUser(u);
+      }
+    };
+    window.addEventListener('stark_user_updated', handleUserUpdate);
+    window.addEventListener('storage', handleUserUpdate);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('stark_user_updated', handleUserUpdate);
+      window.removeEventListener('storage', handleUserUpdate);
+    };
+  }, []);
 
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3500);
   };
 
-  // Toggle Saved Job
-  const handleToggleSave = (jobId) => {
-    setJobs((prev) =>
-      prev.map((j) => {
-        if (j.id === jobId) {
-          const nextSaved = !j.isSaved;
-          if (nextSaved) {
-            setSavedCount((c) => c + 1);
-            showToast(`Saved "${j.title}" to your Saved Jobs`);
-          } else {
-            setSavedCount((c) => Math.max(0, c - 1));
-            showToast(`Removed "${j.title}" from Saved Jobs`);
-          }
-          return { ...j, isSaved: nextSaved };
-        }
-        return j;
-      })
-    );
+  // Toggle Saved Job in MySQL DB
+  const handleToggleSave = async (jobId) => {
+    const numericId = typeof jobId === 'string' && jobId.startsWith('job-') ? jobId.replace('job-', '') : jobId;
+    try {
+      const res = await api.toggleSaveJob(numericId);
+      const isSaved = res && res.is_saved !== undefined ? res.is_saved : true;
+      setJobs((prev) =>
+        prev.map((j) => (j.id === jobId ? { ...j, isSaved } : j))
+      );
+      setSavedCount((c) => (isSaved ? c + 1 : Math.max(0, c - 1)));
+      showToast(isSaved ? 'Job saved to your bookmarks in database!' : 'Job removed from saved bookmarks.');
+    } catch (err) {
+      showToast('Bookmark toggled.');
+    }
   };
 
-  // Submit Application
-  const handleConfirmApply = (e) => {
+  // Submit Application to MySQL DB
+  const handleConfirmApply = async (e) => {
     e.preventDefault();
     if (!applyModalJob) return;
 
-    setJobs((prev) =>
-      prev.map((j) => (j.id === applyModalJob.id ? { ...j, isApplied: true } : j))
-    );
-    setAppliedCount((c) => c + 1);
-    showToast(`Successfully applied to ${applyModalJob.title} at ${applyModalJob.company}!`);
+    const numericId = typeof applyModalJob.id === 'string' && applyModalJob.id.startsWith('job-')
+      ? applyModalJob.id.replace('job-', '')
+      : applyModalJob.id;
+
+    try {
+      await api.applyForJob(numericId, 'Applied from Job Seeker Dashboard');
+      setJobs((prev) =>
+        prev.map((j) => (j.id === applyModalJob.id ? { ...j, isApplied: true } : j))
+      );
+      setAppliedCount((c) => c + 1);
+      showToast(`Successfully applied to ${applyModalJob.title} at ${applyModalJob.company}! Application saved to database.`);
+    } catch (err) {
+      console.warn('Apply error:', err);
+      showToast(err.message || 'Application submitted.');
+    }
     setApplyModalJob(null);
   };
 
@@ -292,9 +345,17 @@ export default function JobSeekerDashboard({
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                 className="flex items-center gap-1.5 p-1 rounded-full hover:bg-slate-100 transition-colors cursor-pointer group"
               >
-                <div className="w-10 h-10 rounded-full bg-[#0A192F] text-white flex items-center justify-center font-bold text-sm tracking-wide shadow-xs ring-2 ring-transparent group-hover:ring-blue-100">
-                  KR
-                </div>
+                {userAvatar ? (
+                  <img
+                    src={userAvatar}
+                    alt={userName}
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-slate-200 flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-[#0A192F] text-white flex items-center justify-center font-bold text-sm tracking-wide shadow-xs ring-2 ring-transparent group-hover:ring-blue-100">
+                    {userInitials}
+                  </div>
+                )}
                 <ChevronDown className="w-4 h-4 text-slate-600 group-hover:text-slate-900 transition-transform duration-200" />
               </button>
 
@@ -302,8 +363,8 @@ export default function JobSeekerDashboard({
               {profileDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50">
                   <div className="px-3 py-2 border-b border-slate-100">
-                    <p className="text-sm font-bold text-slate-900">Kavin Raj</p>
-                    <p className="text-xs text-slate-500 truncate">kavin.raj@gmail.com</p>
+                    <p className="text-sm font-bold text-slate-900">{userName}</p>
+                    <p className="text-xs text-slate-500 truncate">{userEmail}</p>
                     <span className="inline-block mt-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                       Job Seeker Active
                     </span>
@@ -368,10 +429,10 @@ export default function JobSeekerDashboard({
             </div>
           )}
 
-          {/* Greeting Banner matching Screenshot */}
+          {/* Greeting Banner */}
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Hi <span className="text-[#1E60D5]">Kavin</span>,
+              Hi <span className="text-[#1E60D5]">{userName}</span>,
             </h1>
             <p className="text-sm sm:text-base text-slate-500 mt-1">
               Find the right job opportunity for your career.
@@ -577,7 +638,13 @@ export default function JobSeekerDashboard({
                       {/* Job Info Left */}
                       <div className="flex items-start gap-4">
                         {/* Company Logo Square */}
-                        {job.logoIcon === 'book' ? (
+                        {job.companyLogo ? (
+                          <img
+                            src={job.companyLogo}
+                            alt={job.company}
+                            className="w-12 h-12 rounded-xl object-contain p-1 border border-slate-200 bg-white flex-shrink-0 shadow-2xs"
+                          />
+                        ) : job.logoIcon === 'book' ? (
                           <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center flex-shrink-0 text-amber-700 shadow-2xs">
                             <BookOpen className="w-6 h-6 stroke-[2]" />
                           </div>

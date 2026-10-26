@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Calendar,
   Clock,
@@ -26,183 +26,84 @@ import {
   Briefcase,
   Share2,
   CalendarCheck,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
 import CompanySidebar from './CompanySidebar';
-
-// Complete dataset of interviews matching the reference screenshot exactly
-const INITIAL_INTERVIEWS = [
-  {
-    id: 'int-1',
-    candidateName: 'Ravi Kumar',
-    location: 'Thoothukudi, TN',
-    fullLocation: 'Thoothukudi, Tamil Nadu',
-    jobTitle: 'Electrician',
-    date: 'Oct 14, 2026',
-    time: '10:00 AM',
-    timeRange: '10:00 AM - 10:30 AM',
-    dayNumber: 14,
-    type: 'Online',
-    status: 'Upcoming',
-    isToday: true,
-    applicantBadge: 'New Applicant',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=faces',
-    avatarInitials: 'RK',
-    avatarBg: 'bg-blue-100 text-blue-700',
-    meetingLink: 'https://meet.google.com/abc-defg-hij',
-    interviewer: 'You (Hiring Manager)',
-    interviewerEmail: 'hr@abcindustrial.in',
-    notes: 'Discuss technical skills and previous experience in industrial panel wiring and motor controls.',
-    experience: '2 years',
-    phone: '+91 98765 43210',
-    email: 'ravi.kumar@gmail.com'
-  },
-  {
-    id: 'int-2',
-    candidateName: 'Siva Jothi',
-    location: 'Madurai, TN',
-    fullLocation: 'Madurai, Tamil Nadu',
-    jobTitle: 'Machine Operator',
-    date: 'Oct 14, 2026',
-    time: '11:30 AM',
-    timeRange: '11:30 AM - 12:15 PM',
-    dayNumber: 14,
-    type: 'On-site',
-    status: 'Upcoming',
-    isToday: true,
-    applicantBadge: 'Shortlisted',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=faces',
-    avatarInitials: 'SJ',
-    avatarBg: 'bg-rose-100 text-rose-700',
-    meetingLink: null,
-    venue: 'Plant Floor 2, ABC Industrial Services, SIPCOT Complex, Thoothukudi',
-    interviewer: 'Plant Manager & You',
-    interviewerEmail: 'hr@abcindustrial.in',
-    notes: 'Physical machine operation test and safety protocols assessment.',
-    experience: '3 years',
-    phone: '+91 94321 09876',
-    email: 'siva.jothi@gmail.com'
-  },
-  {
-    id: 'int-3',
-    candidateName: 'Divya Nair',
-    location: 'Chennai, TN',
-    fullLocation: 'Chennai, Tamil Nadu',
-    jobTitle: 'Safety Supervisor',
-    date: 'Oct 14, 2026',
-    time: '03:00 PM',
-    timeRange: '03:00 PM - 03:45 PM',
-    dayNumber: 14,
-    type: 'Online',
-    status: 'Upcoming',
-    isToday: true,
-    applicantBadge: 'Reviewed',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=faces',
-    avatarInitials: 'DN',
-    avatarBg: 'bg-rose-100 text-rose-700',
-    meetingLink: 'https://meet.google.com/xyz-uvwx-rst',
-    interviewer: 'Safety Director & HR',
-    interviewerEmail: 'hr@abcindustrial.in',
-    notes: 'Audit experience and safety compliance documentation review.',
-    experience: '5 years',
-    phone: '+91 96543 21098',
-    email: 'divya.nair@gmail.com'
-  },
-  {
-    id: 'int-4',
-    candidateName: 'Arun Prakash',
-    location: 'Tirunelveli, TN',
-    fullLocation: 'Tirunelveli, Tamil Nadu',
-    jobTitle: 'Fitter',
-    date: 'Oct 15, 2026',
-    time: '10:00 AM',
-    timeRange: '10:00 AM - 10:45 AM',
-    dayNumber: 15,
-    type: 'On-site',
-    status: 'Scheduled',
-    isToday: false,
-    applicantBadge: 'Shortlisted',
-    avatar: null,
-    avatarInitials: 'AP',
-    avatarBg: 'bg-purple-100 text-purple-700',
-    meetingLink: null,
-    venue: 'Workshop Unit B, SIPCOT Industrial Complex, Thoothukudi',
-    interviewer: 'Chief Mechanical Engineer',
-    interviewerEmail: 'hr@abcindustrial.in',
-    notes: 'Practical tool handling and pipe fabrication blueprint test.',
-    experience: '4 years',
-    phone: '+91 97123 45678',
-    email: 'arun.prakash@gmail.com'
-  },
-  {
-    id: 'int-5',
-    candidateName: 'Muthu Selvam',
-    location: 'Thoothukudi, TN',
-    fullLocation: 'Thoothukudi, Tamil Nadu',
-    jobTitle: 'Maintenance Technician',
-    date: 'Oct 16, 2026',
-    time: '02:00 PM',
-    timeRange: '02:00 PM - 02:30 PM',
-    dayNumber: 16,
-    type: 'Online',
-    status: 'Scheduled',
-    isToday: false,
-    applicantBadge: 'Reviewed',
-    avatar: null,
-    avatarInitials: 'MS',
-    avatarBg: 'bg-emerald-100 text-emerald-700',
-    meetingLink: 'https://meet.google.com/pqr-stuv-wxy',
-    interviewer: 'You (Hiring Manager)',
-    interviewerEmail: 'hr@abcindustrial.in',
-    notes: 'Hydraulics troubleshooting case discussion.',
-    experience: '3.5 years',
-    phone: '+91 98451 23456',
-    email: 'muthu.selvam@gmail.com'
-  },
-  {
-    id: 'int-6',
-    candidateName: 'Priya L',
-    location: 'Madurai, TN',
-    fullLocation: 'Madurai, Tamil Nadu',
-    jobTitle: 'HR Assistant',
-    date: 'Oct 17, 2026',
-    time: '11:00 AM',
-    timeRange: '11:00 AM - 11:30 AM',
-    dayNumber: 17,
-    type: 'On-site',
-    status: 'Scheduled',
-    isToday: false,
-    applicantBadge: 'New',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=faces',
-    avatarInitials: 'PL',
-    avatarBg: 'bg-blue-100 text-blue-700',
-    meetingLink: null,
-    venue: 'Administration Building, Conference Room 1',
-    interviewer: 'Head of HR',
-    interviewerEmail: 'hr@abcindustrial.in',
-    notes: 'HR policy knowledge and documentation management evaluation.',
-    experience: '2 years',
-    phone: '+91 94433 22110',
-    email: 'priya.l@gmail.com'
-  }
-];
-
-// Days with scheduled interviews for calendar dots
-const INTERVIEW_CALENDAR_DAYS = [14, 15, 16, 17, 21, 22, 24, 29];
+import api from '../services/api';
 
 /**
- * Company Interviews Component (Single File Implementation)
- * Exact recreation of the reference screenshot:
- * - Reusable Employer Sidebar (Interviews tab highlighted in blue #1976D2)
- * - Top header with search, notification, and profile avatar
- * - Breadcrumbs: Home > Interviews + "+ Schedule Interview" primary button
- * - 5 KPI Metric Cards: Total Interviews (6), Today (3), Completed (12), Rescheduled (2), Cancelled (1)
- * - 3-Column Layout:
- *   - Left: Interactive Mini Calendar (October 2026 with interview dots) & "Today's Interviews (3)" timeline
- *   - Middle: Filter Tabs (All 6, Upcoming 3, Today 3, Completed 12, Rescheduled 2, Cancelled 1), Filter bar, and Interviews Table
- *   - Right: Interview & Candidate Detail Preview Card (Google Meet link with copy, interviewers, notes, and actions: Mark as Completed, Reschedule, Cancel)
- * - Interactive Schedule Interview Modal
+ * Helper to map backend Interview model to the UI format
  */
+function formatBackendInterview(item) {
+  const d = item.interview_date ? new Date(item.interview_date) : new Date();
+  const today = new Date();
+  const isToday = d.toDateString() === today.toDateString();
+
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const formattedDate = `${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+
+  let hours = d.getHours();
+  const minutes = d.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+
+  const rawStatus = item.status || 'scheduled';
+  const statusCapitalized = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1);
+  const candidateName = item.user?.name || 'Applicant';
+  const jobTitle = item.application?.job_listing?.title || item.round_name || 'Position';
+  const location = item.user?.seeker_profile?.current_location || item.company?.location || 'Thoothukudi, TN';
+
+  const avatarUrl = item.user?.avatar_url || (item.user?.avatar ? (item.user.avatar.startsWith('http') ? item.user.avatar : `http://127.0.0.1:8000/storage/${item.user.avatar}`) : null);
+  const initials = candidateName
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase() || 'AP';
+
+  return {
+    id: item.id,
+    realId: item.id,
+    candidateName,
+    location,
+    fullLocation: item.location_address || location,
+    jobTitle,
+    date: formattedDate,
+    rawDate: d,
+    time: formattedTime,
+    timeRange: `${formattedTime} - 45 mins`,
+    dayNumber: d.getDate(),
+    type: item.interview_type === 'in_person' ? 'On-site' : 'Online',
+    status: statusCapitalized,
+    isToday,
+    applicantBadge: item.round_name || 'Interview',
+    avatar: avatarUrl,
+    avatarInitials: initials,
+    avatarBg: 'bg-blue-100 text-[#1976D2]',
+    meetingLink: item.meeting_link,
+    venue: item.location_address,
+    interviewer: 'You (Hiring Manager)',
+    interviewerEmail: item.company?.email || 'hr@starkjobs.com',
+    notes: item.notes || 'Interview scheduled with candidate.',
+    experience: item.user?.seeker_profile?.experience_level || '1-3 years',
+    phone: item.user?.phone || 'N/A',
+    email: item.user?.email || 'N/A',
+    skills: item.user?.seeker_profile?.skills || [],
+    workHistory: item.user?.seeker_profile?.work_history || [],
+    education: item.user?.seeker_profile?.education || [],
+    professionalSummary: item.user?.seeker_profile?.professional_summary || '',
+    resumeUrl: item.user?.seeker_profile?.resume_path
+      ? (item.user.seeker_profile.resume_path.startsWith('http')
+          ? item.user.seeker_profile.resume_path
+          : `http://127.0.0.1:8000/storage/${item.user.seeker_profile.resume_path}`)
+      : null,
+  };
+}
+
 export default function CompanyInterviews({
   onLogout,
   onNavigateHome,
@@ -213,9 +114,11 @@ export default function CompanyInterviews({
   const [notificationOpen, setNotificationOpen] = useState(false);
 
   // Interviews State
-  const [interviews, setInterviews] = useState(INITIAL_INTERVIEWS);
-  const [selectedInterviewId, setSelectedInterviewId] = useState('int-1');
-  const [selectedCalendarDay, setSelectedCalendarDay] = useState(14); // 14th is active
+  const [interviews, setInterviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [applications, setApplications] = useState([]);
+  const [selectedInterviewId, setSelectedInterviewId] = useState(null);
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState(new Date().getDate());
   const [statusTab, setStatusTab] = useState('all'); // 'all', 'upcoming', 'today', 'completed', 'rescheduled', 'cancelled'
 
   // Table Filters
@@ -230,15 +133,74 @@ export default function CompanyInterviews({
 
   // Schedule Interview Modal State
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
-  const [newCandidate, setNewCandidate] = useState('Ramesh Kannan');
-  const [newJobTitle, setNewJobTitle] = useState('Industrial Electrician');
-  const [newDate, setNewDate] = useState('2026-10-18');
-  const [newTime, setNewTime] = useState('11:00 AM');
+  const [selectedAppId, setSelectedAppId] = useState('');
+  const [newCandidate, setNewCandidate] = useState('');
+  const [newJobTitle, setNewJobTitle] = useState('');
+  const [newDate, setNewDate] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  });
+  const [newTime, setNewTime] = useState('11:00');
   const [newType, setNewType] = useState('Online');
   const [newNotes, setNewNotes] = useState('');
+  const [submittingSchedule, setSubmittingSchedule] = useState(false);
+
+  // Fetch interviews from backend
+  const fetchInterviews = async () => {
+    try {
+      setLoading(true);
+      const res = await api.getCompanyInterviews();
+      const raw = res?.data || [];
+      const mapped = raw.map(formatBackendInterview);
+      setInterviews(mapped);
+      if (mapped.length > 0) {
+        setSelectedInterviewId((curr) => curr || mapped[0].id);
+      }
+    } catch (err) {
+      console.error('Failed to load interviews:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch applications for scheduling dropdown
+  const fetchApplications = async () => {
+    try {
+      const res = await api.getApplications();
+      const apps = res?.data || [];
+      setApplications(apps);
+      if (apps.length > 0) {
+        setSelectedAppId(apps[0].id);
+        setNewCandidate(apps[0].user?.name || '');
+        setNewJobTitle(apps[0].job_listing?.title || '');
+      }
+    } catch (err) {
+      console.error('Failed to load applications:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchInterviews();
+    fetchApplications();
+  }, []);
+
+  // Days with scheduled interviews for calendar dots
+  const interviewCalendarDays = useMemo(() => {
+    return Array.from(new Set(interviews.map((i) => i.dayNumber).filter(Boolean)));
+  }, [interviews]);
+
+  // KPI Dynamic Counts
+  const totalCount = interviews.length;
+  const todayCount = interviews.filter((i) => i.isToday).length;
+  const completedCount = interviews.filter((i) => i.status.toLowerCase() === 'completed').length;
+  const rescheduledCount = interviews.filter((i) => i.status.toLowerCase() === 'rescheduled').length;
+  const cancelledCount = interviews.filter((i) => i.status.toLowerCase() === 'cancelled').length;
+  const upcomingCount = interviews.filter((i) => ['scheduled', 'upcoming'].includes(i.status.toLowerCase())).length;
 
   // Active interview preview item
   const activeInterview = useMemo(() => {
+    if (!interviews.length) return null;
     return interviews.find((i) => i.id === selectedInterviewId) || interviews[0];
   }, [interviews, selectedInterviewId]);
 
@@ -258,13 +220,13 @@ export default function CompanyInterviews({
       if (statusTab === 'cancelled' && item.status !== 'Cancelled') return false;
 
       // Job Filter
-      if (jobFilter !== 'All Jobs' && item.jobTitle !== jobFilter) return false;
+      if (jobFilter !== 'All Jobs' && item.jobTitle.toLowerCase() !== jobFilter.toLowerCase()) return false;
 
       // Type Filter
       if (typeFilter !== 'All Types' && item.type !== typeFilter) return false;
 
       // Status Dropdown
-      if (statusDropdown !== 'All Status' && item.status !== statusDropdown) return false;
+      if (statusDropdown !== 'All Status' && item.status.toLowerCase() !== statusDropdown.toLowerCase()) return false;
 
       // Search Filter
       if (tableSearch.trim()) {
@@ -287,49 +249,55 @@ export default function CompanyInterviews({
     setTimeout(() => setCopiedLink(false), 2500);
   };
 
-  // Status updates
-  const handleUpdateStatus = (id, newStatus) => {
-    setInterviews((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
-    );
-    alert(`Interview marked as ${newStatus}!`);
+  // Status updates via API
+  const handleUpdateStatus = async (id, newStatus) => {
+    try {
+      await api.updateInterviewStatus(id, newStatus.toLowerCase());
+      setInterviews((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
+      );
+      alert(`Interview marked as ${newStatus}!`);
+    } catch (err) {
+      console.error('Failed to update interview status:', err);
+      alert('Failed to update status. Please try again.');
+    }
   };
 
-  // Add new interview submit
-  const handleScheduleSubmit = (e) => {
+  // Add new interview submit to backend
+  const handleScheduleSubmit = async (e) => {
     e.preventDefault();
-    const newId = `int-${Date.now()}`;
-    const newItem = {
-      id: newId,
-      candidateName: newCandidate,
-      location: 'Thoothukudi, TN',
-      fullLocation: 'Thoothukudi, Tamil Nadu',
-      jobTitle: newJobTitle,
-      date: newDate,
-      time: newTime,
-      timeRange: `${newTime} - 45 mins`,
-      dayNumber: parseInt(newDate.split('-')[2]) || 18,
-      type: newType,
-      status: 'Scheduled',
-      isToday: false,
-      applicantBadge: 'Interview',
-      avatar: null,
-      avatarInitials: newCandidate.substring(0, 2).toUpperCase(),
-      avatarBg: 'bg-blue-100 text-blue-700',
-      meetingLink: newType === 'Online' ? 'https://meet.google.com/new-scheduled-interview' : null,
-      venue: newType === 'On-site' ? 'ABC Industrial Services Main Plant, Thoothukudi' : null,
-      interviewer: 'You (Hiring Manager)',
-      interviewerEmail: 'hr@abcindustrial.in',
-      notes: newNotes || 'General interview and technical round.',
-      experience: '3 years',
-      phone: '+91 98765 00000',
-      email: `${newCandidate.toLowerCase().replace(/\s+/g, '.')}@gmail.com`
-    };
+    if (!selectedAppId && applications.length > 0) {
+      alert('Please select an applicant.');
+      return;
+    }
 
-    setInterviews([newItem, ...interviews]);
-    setSelectedInterviewId(newId);
-    setScheduleModalOpen(false);
-    alert(`Interview scheduled with ${newCandidate} for ${newDate} at ${newTime}!`);
+    setSubmittingSchedule(true);
+    try {
+      const combinedDateTime = `${newDate} ${newTime}:00`;
+      const res = await api.scheduleInterview({
+        application_id: selectedAppId || applications[0]?.id,
+        interview_date: combinedDateTime,
+        round_name: 'Interview',
+        interview_type: newType === 'Online' ? 'online' : 'in_person',
+        meeting_link: newType === 'Online' ? `https://meet.google.com/stark-meet-${Math.floor(1000 + Math.random() * 9000)}` : null,
+        location_address: newType === 'On-site' ? 'Stark Industrial Office, Tuticorin' : null,
+        notes: newNotes || 'Interview scheduled with candidate.',
+      });
+
+      if (res?.success) {
+        alert(`Interview scheduled successfully with ${newCandidate}!`);
+        setScheduleModalOpen(false);
+        await fetchInterviews();
+        if (res.data?.id) setSelectedInterviewId(res.data.id);
+      } else {
+        alert(res?.message || 'Failed to schedule interview.');
+      }
+    } catch (err) {
+      console.error('Schedule interview error:', err);
+      alert(err.message || 'Error scheduling interview. Please try again.');
+    } finally {
+      setSubmittingSchedule(false);
+    }
   };
 
   // Helper for status badge styling
@@ -487,10 +455,10 @@ export default function CompanyInterviews({
                     Total Interviews
                   </span>
                   <div className="text-2xl font-black text-slate-900 leading-tight mt-0.5">
-                    6
+                    {totalCount}
                   </div>
                   <div className="text-[10px] font-semibold text-emerald-600 mt-0.5">
-                    ↗ 2 this week
+                    {totalCount === 1 ? '1 interview scheduled' : `${totalCount} interviews`}
                   </div>
                 </div>
               </div>
@@ -513,10 +481,10 @@ export default function CompanyInterviews({
                     Today
                   </span>
                   <div className="text-2xl font-black text-slate-900 leading-tight mt-0.5">
-                    3
+                    {todayCount}
                   </div>
                   <div className="text-[10px] text-slate-400 mt-0.5">
-                    2 upcoming
+                    {upcomingCount} upcoming
                   </div>
                 </div>
               </div>
@@ -539,10 +507,10 @@ export default function CompanyInterviews({
                     Completed
                   </span>
                   <div className="text-2xl font-black text-slate-900 leading-tight mt-0.5">
-                    12
+                    {completedCount}
                   </div>
                   <div className="text-[10px] font-semibold text-emerald-600 mt-0.5">
-                    ↗ 20%
+                    {completedCount} finished
                   </div>
                 </div>
               </div>
@@ -565,10 +533,10 @@ export default function CompanyInterviews({
                     Rescheduled
                   </span>
                   <div className="text-2xl font-black text-slate-900 leading-tight mt-0.5">
-                    2
+                    {rescheduledCount}
                   </div>
                   <div className="text-[10px] font-semibold text-amber-600 mt-0.5">
-                    ↗ 1
+                    {rescheduledCount} pending
                   </div>
                 </div>
               </div>
@@ -591,10 +559,10 @@ export default function CompanyInterviews({
                     Cancelled
                   </span>
                   <div className="text-2xl font-black text-slate-900 leading-tight mt-0.5">
-                    1
+                    {cancelledCount}
                   </div>
                   <div className="text-[10px] text-slate-400 mt-0.5">
-                    0 this week
+                    {cancelledCount} cancelled
                   </div>
                 </div>
               </div>
@@ -649,82 +617,43 @@ export default function CompanyInterviews({
                   <span className="text-slate-300 py-1">28</span>
                   <span className="text-slate-300 py-1">29</span>
                   <span className="text-slate-300 py-1">30</span>
-                  <span className="text-slate-700 py-1">1</span>
-                  <span className="text-slate-700 py-1">2</span>
-                  <span className="text-slate-700 py-1">3</span>
-
-                  <span className="text-slate-700 py-1">4</span>
-                  <span className="text-slate-700 py-1">5</span>
-                  <span className="text-slate-700 py-1">6</span>
-                  <span className="text-slate-700 py-1">7</span>
-                  <span className="text-slate-700 py-1">8</span>
-                  <span className="text-slate-700 py-1">9</span>
-                  <span className="text-slate-700 py-1">10</span>
-
-                  <span className="text-slate-700 py-1">11</span>
-                  <span className="text-slate-700 py-1">12</span>
-                  <span className="text-slate-700 py-1">13</span>
-
-                  {/* Day 14: Active Blue Circle matching screenshot */}
-                  <div className="flex flex-col items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedCalendarDay(14);
-                        setStatusTab('today');
-                      }}
-                      className="w-7 h-7 rounded-full bg-[#1976D2] text-white font-bold flex items-center justify-center shadow-xs cursor-pointer"
-                    >
-                      14
-                    </button>
-                    <span className="w-1 h-1 rounded-full bg-emerald-500 mt-0.5" />
-                  </div>
-
-                  <span className="text-slate-700 py-1">15</span>
-                  <div className="flex flex-col items-center justify-center">
-                    <span className="text-slate-700">16</span>
-                    <span className="w-1 h-1 rounded-full bg-emerald-500" />
-                  </div>
-                  <div className="flex flex-col items-center justify-center">
-                    <span className="text-slate-700">17</span>
-                    <span className="w-1 h-1 rounded-full bg-emerald-500" />
-                  </div>
-
-                  <span className="text-slate-700 py-1">18</span>
-                  <span className="text-slate-700 py-1">19</span>
-                  <span className="text-slate-700 py-1">20</span>
-                  <div className="flex flex-col items-center justify-center">
-                    <span className="text-slate-700">21</span>
-                    <span className="w-1 h-1 rounded-full bg-emerald-500" />
-                  </div>
-                  <div className="flex flex-col items-center justify-center">
-                    <span className="text-slate-700">22</span>
-                    <span className="w-1 h-1 rounded-full bg-emerald-500" />
-                  </div>
-                  <span className="text-slate-700 py-1">23</span>
-                  <div className="flex flex-col items-center justify-center">
-                    <span className="text-slate-700">24</span>
-                    <span className="w-1 h-1 rounded-full bg-emerald-500" />
-                  </div>
-
-                  <span className="text-slate-700 py-1">25</span>
-                  <span className="text-slate-700 py-1">26</span>
-                  <span className="text-slate-700 py-1">27</span>
-                  <span className="text-slate-700 py-1">28</span>
-                  <div className="flex flex-col items-center justify-center">
-                    <span className="text-slate-700">29</span>
-                    <span className="w-1 h-1 rounded-full bg-emerald-500" />
-                  </div>
-                  <span className="text-slate-700 py-1">30</span>
-                  <span className="text-slate-700 py-1">31</span>
+                  {Array.from({ length: 31 }, (_, idx) => {
+                    const day = idx + 1;
+                    const isSelected = selectedCalendarDay === day;
+                    const hasInterview = interviewCalendarDays.includes(day);
+                    return (
+                      <div key={day} className="flex flex-col items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedCalendarDay(day);
+                            const match = interviews.find((i) => i.dayNumber === day);
+                            if (match) {
+                              setSelectedInterviewId(match.id);
+                            }
+                          }}
+                          className={`w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#1976D2] text-white shadow-xs'
+                              : 'text-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          {day}
+                        </button>
+                        {hasInterview && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-0.5" />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Widget 2: Today's Interviews (3) timeline */}
+              {/* Widget 2: Today's Interviews timeline */}
               <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-black text-slate-900">
-                    Today's Interviews (3)
+                    Today's Interviews ({todayCount})
                   </h3>
                   <button
                     type="button"
@@ -735,57 +664,62 @@ export default function CompanyInterviews({
                   </button>
                 </div>
 
-                {/* Timeline items matching screenshot */}
-                <div className="space-y-4 relative pl-3 before:absolute before:left-1 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
-                  {todayInterviews.map((item, index) => {
-                    const dotColors = ['bg-emerald-500', 'bg-amber-500', 'bg-blue-500'];
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={() => setSelectedInterviewId(item.id)}
-                        className="relative flex items-center justify-between text-xs cursor-pointer group"
-                      >
-                        <span
-                          className={`absolute -left-3.5 w-2.5 h-2.5 rounded-full ring-4 ring-white ${dotColors[index % 3]}`}
-                        />
-                        <div className="pl-3 min-w-0">
-                          <span className="text-[11px] font-mono text-slate-400 block font-semibold">
-                            {item.time}
-                          </span>
-                          <span className="font-bold text-slate-900 block truncate group-hover:text-blue-600 transition-colors">
-                            {item.candidateName}
-                          </span>
-                          <span className="text-[10px] text-slate-500 block truncate">
-                            {item.jobTitle}
+                {todayInterviews.length === 0 ? (
+                  <p className="text-xs text-slate-400 py-4 text-center italic">
+                    No interviews scheduled for today
+                  </p>
+                ) : (
+                  <div className="space-y-4 relative pl-3 before:absolute before:left-1 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+                    {todayInterviews.map((item, index) => {
+                      const dotColors = ['bg-emerald-500', 'bg-amber-500', 'bg-blue-500'];
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => setSelectedInterviewId(item.id)}
+                          className="relative flex items-center justify-between text-xs cursor-pointer group"
+                        >
+                          <span
+                            className={`absolute -left-3.5 w-2.5 h-2.5 rounded-full ring-4 ring-white ${dotColors[index % 3]}`}
+                          />
+                          <div className="pl-3 min-w-0">
+                            <span className="text-[11px] font-mono text-slate-400 block font-semibold">
+                              {item.time}
+                            </span>
+                            <span className="font-bold text-slate-900 block truncate group-hover:text-blue-600 transition-colors">
+                              {item.candidateName}
+                            </span>
+                            <span className="text-[10px] text-slate-500 block truncate">
+                              {item.jobTitle}
+                            </span>
+                          </div>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              item.type === 'Online'
+                                ? 'bg-blue-50 text-[#1976D2] border border-blue-200/60'
+                                : 'bg-purple-50 text-purple-700 border border-purple-200/60'
+                            }`}
+                          >
+                            {item.type}
                           </span>
                         </div>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            item.type === 'Online'
-                              ? 'bg-blue-50 text-[#1976D2] border border-blue-200/60'
-                              : 'bg-purple-50 text-purple-700 border border-purple-200/60'
-                          }`}
-                        >
-                          {item.type}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* COLUMN 2: Middle Interviews Table (5 cols) */}
             <div className="lg:col-span-5 space-y-4">
-              {/* Filter Tabs Bar (All 6, Upcoming 3, Today 3, Completed 12, Rescheduled 2, Cancelled 1) */}
+              {/* Filter Tabs Bar with Dynamic counts */}
               <div className="flex items-center gap-1.5 flex-wrap text-xs font-bold">
                 {[
-                  { id: 'all', label: 'All', count: 6 },
-                  { id: 'upcoming', label: 'Upcoming', count: 3 },
-                  { id: 'today', label: 'Today', count: 3 },
-                  { id: 'completed', label: 'Completed', count: 12 },
-                  { id: 'rescheduled', label: 'Rescheduled', count: 2 },
-                  { id: 'cancelled', label: 'Cancelled', count: 1 },
+                  { id: 'all', label: 'All', count: totalCount },
+                  { id: 'upcoming', label: 'Upcoming', count: upcomingCount },
+                  { id: 'today', label: 'Today', count: todayCount },
+                  { id: 'completed', label: 'Completed', count: completedCount },
+                  { id: 'rescheduled', label: 'Rescheduled', count: rescheduledCount },
+                  { id: 'cancelled', label: 'Cancelled', count: cancelledCount },
                 ].map((tab) => {
                   const isActive = statusTab === tab.id;
                   return (
@@ -817,12 +751,9 @@ export default function CompanyInterviews({
                       className="appearance-none bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 py-1.5 pl-3 pr-7 focus:outline-none cursor-pointer"
                     >
                       <option>All Jobs</option>
-                      <option>Electrician</option>
-                      <option>Machine Operator</option>
-                      <option>Safety Supervisor</option>
-                      <option>Fitter</option>
-                      <option>Maintenance Technician</option>
-                      <option>HR Assistant</option>
+                      {Array.from(new Set(interviews.map((i) => i.jobTitle).filter(Boolean))).map((title) => (
+                        <option key={title} value={title}>{title}</option>
+                      ))}
                     </select>
                     <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
@@ -908,115 +839,146 @@ export default function CompanyInterviews({
                     </thead>
 
                     <tbody className="divide-y divide-slate-100">
-                      {filteredInterviews.map((item) => {
-                        const isSelected = selectedInterviewId === item.id;
-                        return (
-                          <tr
-                            key={item.id}
-                            onClick={() => setSelectedInterviewId(item.id)}
-                            className={`transition-colors cursor-pointer group ${
-                              isSelected ? 'bg-blue-50/60' : 'hover:bg-slate-50/80'
-                            }`}
-                          >
-                            <td
-                              className="py-3.5 px-3 text-center"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <input
-                                type="checkbox"
-                                className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                              />
-                            </td>
-
-                            {/* Candidate */}
-                            <td className="py-3.5 px-3">
-                              <div className="flex items-center gap-2.5">
-                                {item.avatar ? (
-                                  <img
-                                    src={item.avatar}
-                                    alt={item.candidateName}
-                                    className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-slate-200"
-                                  />
-                                ) : (
-                                  <div
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 ${item.avatarBg}`}
-                                  >
-                                    {item.avatarInitials}
-                                  </div>
-                                )}
-                                <div className="min-w-0">
-                                  <span className="font-bold text-slate-900 block truncate group-hover:text-blue-600 transition-colors">
-                                    {item.candidateName}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400 block truncate">
-                                    {item.location}
-                                  </span>
-                                </div>
-                              </div>
-                            </td>
-
-                            {/* Job Title */}
-                            <td className="py-3.5 px-3 font-semibold text-slate-700 whitespace-nowrap">
-                              {item.jobTitle}
-                            </td>
-
-                            {/* Date & Time */}
-                            <td className="py-3.5 px-3 whitespace-nowrap">
-                              <div className="flex items-center gap-1 text-[11px] text-slate-700 font-semibold">
-                                <Calendar className="w-3 h-3 text-slate-400" />
-                                <span>{item.date}</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-[10px] text-slate-400 font-mono mt-0.5">
-                                <Clock className="w-3 h-3 text-slate-400" />
-                                <span>{item.time}</span>
-                              </div>
-                            </td>
-
-                            {/* Type Pill */}
-                            <td className="py-3.5 px-3 whitespace-nowrap">
-                              <span
-                                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                                  item.type === 'Online'
-                                    ? 'bg-blue-100 text-[#1976D2]'
-                                    : 'bg-purple-100 text-purple-700'
-                                }`}
-                              >
-                                {item.type === 'Online' ? (
-                                  <Video className="w-3 h-3" />
-                                ) : (
-                                  <Building2 className="w-3 h-3" />
-                                )}
-                                <span>{item.type}</span>
-                              </span>
-                            </td>
-
-                            {/* Status Pill */}
-                            <td className="py-3.5 px-3 whitespace-nowrap">
-                              <span
-                                className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getStatusBadgeClass(
-                                  item.status
-                                )}`}
-                              >
-                                {item.status}
-                              </span>
-                            </td>
-
-                            {/* Actions Dropdown */}
-                            <td
-                              className="py-3.5 px-3 text-center"
-                              onClick={(e) => e.stopPropagation()}
-                            >
+                      {loading ? (
+                        <tr>
+                          <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
+                            <Loader2 className="w-6 h-6 text-blue-600 animate-spin mx-auto mb-2" />
+                            <span>Loading interviews...</span>
+                          </td>
+                        </tr>
+                      ) : filteredInterviews.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
+                            <Calendar className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                            <p className="font-bold text-slate-700 text-sm">No interviews found</p>
+                            <p className="text-slate-400 text-[11px] mt-0.5">
+                              {interviews.length === 0
+                                ? "You haven't scheduled any candidate interviews yet."
+                                : "No interviews match the selected status or filters."}
+                            </p>
+                            {interviews.length === 0 && (
                               <button
                                 type="button"
-                                onClick={() => setSelectedInterviewId(item.id)}
-                                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                                onClick={() => setScheduleModalOpen(true)}
+                                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1976D2] text-white text-xs font-bold rounded-xl shadow-xs"
                               >
-                                <MoreVertical className="w-4 h-4" />
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>Schedule Your First Interview</span>
                               </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                            )}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredInterviews.map((item) => {
+                          const isSelected = selectedInterviewId === item.id;
+                          return (
+                            <tr
+                              key={item.id}
+                              onClick={() => setSelectedInterviewId(item.id)}
+                              className={`transition-colors cursor-pointer group ${
+                                isSelected ? 'bg-blue-50/60' : 'hover:bg-slate-50/80'
+                              }`}
+                            >
+                              <td
+                                className="py-3.5 px-3 text-center"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                />
+                              </td>
+
+                              {/* Candidate */}
+                              <td className="py-3.5 px-3">
+                                <div className="flex items-center gap-2.5">
+                                  {item.avatar ? (
+                                    <img
+                                      src={item.avatar}
+                                      alt={item.candidateName}
+                                      className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-slate-200"
+                                    />
+                                  ) : (
+                                    <div
+                                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 ${item.avatarBg}`}
+                                    >
+                                      {item.avatarInitials}
+                                    </div>
+                                  )}
+                                  <div className="min-w-0">
+                                    <span className="font-bold text-slate-900 block truncate group-hover:text-blue-600 transition-colors">
+                                      {item.candidateName}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 block truncate">
+                                      {item.location}
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Job Title */}
+                              <td className="py-3.5 px-3 font-semibold text-slate-700 whitespace-nowrap">
+                                {item.jobTitle}
+                              </td>
+
+                              {/* Date & Time */}
+                              <td className="py-3.5 px-3 whitespace-nowrap">
+                                <div className="flex items-center gap-1 text-[11px] text-slate-700 font-semibold">
+                                  <Calendar className="w-3 h-3 text-slate-400" />
+                                  <span>{item.date}</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-[10px] text-slate-400 font-mono mt-0.5">
+                                  <Clock className="w-3 h-3 text-slate-400" />
+                                  <span>{item.time}</span>
+                                </div>
+                              </td>
+
+                              {/* Type Pill */}
+                              <td className="py-3.5 px-3 whitespace-nowrap">
+                                <span
+                                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                                    item.type === 'Online'
+                                      ? 'bg-blue-100 text-[#1976D2]'
+                                      : 'bg-purple-100 text-purple-700'
+                                  }`}
+                                >
+                                  {item.type === 'Online' ? (
+                                    <Video className="w-3 h-3" />
+                                  ) : (
+                                    <Building2 className="w-3 h-3" />
+                                  )}
+                                  <span>{item.type}</span>
+                                </span>
+                              </td>
+
+                              {/* Status Pill */}
+                              <td className="py-3.5 px-3 whitespace-nowrap">
+                                <span
+                                  className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getStatusBadgeClass(
+                                    item.status
+                                  )}`}
+                                >
+                                  {item.status}
+                                </span>
+                              </td>
+
+                              {/* Actions Dropdown */}
+                              <td
+                                className="py-3.5 px-3 text-center"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedInterviewId(item.id)}
+                                  className="p-1 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                                >
+                                  <MoreVertical className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -1332,10 +1294,16 @@ export default function CompanyInterviews({
                       <p className="text-[11px] text-slate-500">Verified candidate resume & technical trade credentials</p>
                       <button
                         type="button"
-                        onClick={() => alert(`Downloading resume for ${activeInterview.candidateName}...`)}
+                        onClick={() => {
+                          if (activeInterview.resumeUrl) {
+                            window.open(activeInterview.resumeUrl, '_blank');
+                          } else {
+                            alert(`No resume uploaded yet for ${activeInterview.candidateName}`);
+                          }
+                        }}
                         className="px-4 py-1.5 bg-[#1976D2] hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
                       >
-                        Download PDF
+                        View / Download PDF
                       </button>
                     </div>
                   )}
@@ -1395,34 +1363,52 @@ export default function CompanyInterviews({
             <form onSubmit={handleScheduleSubmit} className="p-6 space-y-4 text-xs sm:text-sm">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Candidate Name *
+                  Candidate / Application *
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={newCandidate}
-                  onChange={(e) => setNewCandidate(e.target.value)}
-                  placeholder="e.g. Ramesh Kannan"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                />
+                {applications.length > 0 ? (
+                  <select
+                    value={selectedAppId}
+                    onChange={(e) => {
+                      const id = Number(e.target.value);
+                      setSelectedAppId(id);
+                      const chosen = applications.find((a) => a.id === id);
+                      if (chosen) {
+                        setNewCandidate(chosen.user?.name || '');
+                        setNewJobTitle(chosen.job_listing?.title || '');
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-semibold"
+                  >
+                    {applications.map((app) => (
+                      <option key={app.id} value={app.id}>
+                        {app.user?.name} — {app.job_listing?.title || 'Applicant'} (App #{app.id})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    required
+                    value={newCandidate}
+                    onChange={(e) => setNewCandidate(e.target.value)}
+                    placeholder="Candidate Name"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                )}
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   Job Position *
                 </label>
-                <select
+                <input
+                  type="text"
+                  required
                   value={newJobTitle}
                   onChange={(e) => setNewJobTitle(e.target.value)}
+                  placeholder="e.g. Electrician"
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                >
-                  <option>Industrial Electrician</option>
-                  <option>Maintenance Technician</option>
-                  <option>Machine Operator</option>
-                  <option>Fitter</option>
-                  <option>Safety Supervisor</option>
-                  <option>HR Assistant</option>
-                </select>
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1443,11 +1429,10 @@ export default function CompanyInterviews({
                     Time *
                   </label>
                   <input
-                    type="text"
+                    type="time"
                     required
                     value={newTime}
                     onChange={(e) => setNewTime(e.target.value)}
-                    placeholder="e.g. 11:00 AM"
                     className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none"
                   />
                 </div>
@@ -1506,9 +1491,11 @@ export default function CompanyInterviews({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#1976D2] hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs transition-colors cursor-pointer text-xs"
+                  disabled={submittingSchedule}
+                  className="px-5 py-2 bg-[#1976D2] hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-xs transition-colors cursor-pointer text-xs flex items-center gap-1.5"
                 >
-                  Schedule & Send Invite
+                  {submittingSchedule && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{submittingSchedule ? 'Scheduling...' : 'Schedule & Send Invite'}</span>
                 </button>
               </div>
             </form>

@@ -231,33 +231,35 @@ export default function CompanyMyJobs({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState('');
   const [notificationOpen, setNotificationOpen] = useState(false);
+  const storedUser = api.getStoredUser?.() || {};
 
   // Filter & Search states
   const [jobs, setJobs] = useState([]);
 
   useEffect(() => {
-    api.getJobs()
+    api.getCompanyJobs()
       .then(res => {
         if (res && res.data) {
           const mapped = res.data.map(j => ({
             id: `job-${j.id}`,
+            realId: j.id,
             title: j.title,
             department: j.category?.name || 'Production',
-            location: j.location || 'Thoothukudi, TN',
+            location: j.location || (j.district?.name ? `${j.district.name}, TN` : 'Thoothukudi, TN'),
             jobType: j.job_type || 'Full-time',
             applicants: j.applications_count || 0,
-            status: j.status === 'active' ? 'Published' : 'Closed',
-            postedOn: 'Recently',
+            status: j.status === 'active' ? 'Published' : (j.status === 'paused' ? 'Pending Review' : 'Closed'),
+            postedOn: j.created_at ? new Date(j.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently',
             icon: Briefcase,
             iconBg: 'bg-blue-100 text-[#1976D2]',
             typeBadge: 'bg-blue-100 text-blue-700',
-            salary: `₹${Number(j.min_salary || 20000).toLocaleString()} - ₹${Number(j.max_salary || 28000).toLocaleString()}/mo`
+            salary: j.salary_range || `₹${Number(j.min_salary || 20000).toLocaleString()} - ₹${Number(j.max_salary || 28000).toLocaleString()}/mo`
           }));
           setJobs(mapped);
         }
       })
       .catch(err => {
-        console.warn('Live jobs fetch warning:', err.message);
+        console.warn('Live company jobs fetch warning:', err.message);
       });
   }, []);
   const [statusTab, setStatusTab] = useState('all'); // 'all', 'published', 'pending', 'closed'
@@ -278,6 +280,10 @@ export default function CompanyMyJobs({
   const [newLocation, setNewLocation] = useState('Thoothukudi, TN');
   const [newJobType, setNewJobType] = useState('Full-time');
   const [newSalary, setNewSalary] = useState('');
+  const [newExperience, setNewExperience] = useState('1 - 3 Years');
+  const [newOpenings, setNewOpenings] = useState(1);
+  const [newDescription, setNewDescription] = useState('');
+  const [newRequirements, setNewRequirements] = useState('');
 
   // Active action menu row
   const [activeMenuJobId, setActiveMenuJobId] = useState(null);
@@ -395,6 +401,11 @@ export default function CompanyMyJobs({
         department: newDepartment,
         location: newLocation,
         job_type: newJobType,
+        salary: newSalary,
+        experience: newExperience,
+        openings: newOpenings,
+        description: newDescription,
+        requirements: newRequirements,
       });
 
       if (res && res.job) {
@@ -417,6 +428,9 @@ export default function CompanyMyJobs({
       setCreateModalOpen(false);
       setNewTitle('');
       setNewSalary('');
+      setNewDescription('');
+      setNewRequirements('');
+      setNewOpenings(1);
       alert(`Job "${newTitle}" created successfully and saved in MySQL job_listings table!`);
     } catch (err) {
       console.error('Error creating job in DB:', err);
@@ -1170,7 +1184,7 @@ export default function CompanyMyJobs({
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900">Post a New Job</h3>
-                  <p className="text-xs text-slate-500">ABC Industrial Services • Employer Portal</p>
+                  <p className="text-xs text-slate-500">{storedUser.name || 'Company'} • Employer Portal</p>
                 </div>
               </div>
               <button
@@ -1262,6 +1276,64 @@ export default function CompanyMyJobs({
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Experience Required
+                  </label>
+                  <select
+                    value={newExperience}
+                    onChange={(e) => setNewExperience(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  >
+                    <option>Fresher / &lt; 1 Year</option>
+                    <option>1 - 3 Years</option>
+                    <option>3 - 5 Years</option>
+                    <option>5+ Years</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Number of Openings
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={newOpenings}
+                    onChange={(e) => setNewOpenings(e.target.value)}
+                    placeholder="e.g. 2"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Job Description
+                </label>
+                <textarea
+                  rows="3"
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  placeholder="Detail key responsibilities, daily work, machine models or work schedule..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Requirements &amp; Qualifications
+                </label>
+                <textarea
+                  rows="2"
+                  value={newRequirements}
+                  onChange={(e) => setNewRequirements(e.target.value)}
+                  placeholder="e.g. ITI Fitter / Electrician, shift flexibility, safety compliance..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
+                />
               </div>
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">

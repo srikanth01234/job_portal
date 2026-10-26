@@ -9,6 +9,16 @@ class Company extends Model
 {
     use HasFactory;
 
+    protected $appends = ['logo_url'];
+
+    public function getLogoUrlAttribute()
+    {
+        if (!$this->logo) {
+            return null;
+        }
+        return str_starts_with($this->logo, 'http') ? $this->logo : asset('storage/' . $this->logo);
+    }
+
     protected $fillable = [
         'user_id',
         'company_name',

@@ -27,6 +27,7 @@ import {
   Award
 } from 'lucide-react';
 import JobSeekerSidebar from './JobSeekerSidebar';
+import api, { getStoredUser } from '../services/api';
 
 export default function JobSeekerFindJobs({
   onLogout,
@@ -77,8 +78,9 @@ export default function JobSeekerFindJobs({
             id: `job-${j.id}`,
             title: j.title,
             company: j.company?.company_name || 'Direct Employer',
+            companyLogo: j.company?.logo_url || (j.company?.logo ? (j.company.logo.startsWith('http') ? j.company.logo : `http://127.0.0.1:8000/storage/${j.company.logo}`) : null),
             companyInitial: (j.company?.company_name || 'DE').slice(0, 2).toUpperCase(),
-            logoType: 'text',
+            logoType: j.company?.logo_url || j.company?.logo ? 'image' : 'text',
             logoBg: 'bg-blue-600',
             logoColor: 'text-white',
             logoText: (j.company?.company_name || 'DE').slice(0, 2).toUpperCase(),
@@ -136,16 +138,33 @@ export default function JobSeekerFindJobs({
     );
   };
 
-  // Submit Application
-  const handleConfirmApply = (e) => {
+  const [coverNote, setCoverNote] = useState('');
+  const [isApplying, setIsApplying] = useState(false);
+  const currentUser = getStoredUser();
+
+  // Submit Application (Stores into MySQL applications table)
+  const handleConfirmApply = async (e) => {
     e.preventDefault();
     if (!applyModalJob) return;
 
-    setJobsList((prev) =>
-      prev.map((j) => (j.id === applyModalJob.id ? { ...j, isApplied: true } : j))
-    );
-    showToast(`Application submitted to ${applyModalJob.company} successfully!`);
-    setApplyModalJob(null);
+    setIsApplying(true);
+    try {
+      const numericId = typeof applyModalJob.id === 'string' && applyModalJob.id.startsWith('job-')
+        ? parseInt(applyModalJob.id.replace('job-', ''), 10)
+        : applyModalJob.id;
+
+      await api.applyForJob(numericId, coverNote || 'I am very interested in this role and have hands-on experience in the required technical skills.');
+      setJobsList((prev) =>
+        prev.map((j) => (j.id === applyModalJob.id ? { ...j, isApplied: true } : j))
+      );
+      showToast(`Application submitted to ${applyModalJob.company} successfully!`);
+      setApplyModalJob(null);
+      setCoverNote('');
+    } catch (err) {
+      showToast(err.message || 'Could not submit application.');
+    } finally {
+      setIsApplying(false);
+    }
   };
 
   // Reset Filters
@@ -625,7 +644,13 @@ export default function JobSeekerFindJobs({
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-4">
                           {/* Company Logo Square */}
-                          {job.logoType === 'icon-book' ? (
+                          {job.companyLogo ? (
+                            <img
+                              src={job.companyLogo}
+                              alt={job.company}
+                              className="w-12 h-12 rounded-xl object-contain p-1 border border-slate-200 bg-white flex-shrink-0 shadow-2xs"
+                            />
+                          ) : job.logoType === 'icon-book' ? (
                             <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center flex-shrink-0 text-amber-700 shadow-2xs">
                               <BookOpen className="w-6 h-6 stroke-[2]" />
                             </div>
@@ -809,7 +834,13 @@ export default function JobSeekerFindJobs({
               {/* Top Company & Actions */}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3.5">
-                  {activeJob.logoType === 'icon-book' ? (
+                  {activeJob.companyLogo ? (
+                    <img
+                      src={activeJob.companyLogo}
+                      alt={activeJob.company}
+                      className="w-14 h-14 rounded-2xl object-contain p-1 border border-slate-200 bg-white flex-shrink-0 shadow-2xs"
+                    />
+                  ) : activeJob.logoType === 'icon-book' ? (
                     <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center flex-shrink-0 text-amber-700 shadow-2xs">
                       <BookOpen className="w-7 h-7 stroke-[2]" />
                     </div>
@@ -1018,9 +1049,8 @@ export default function JobSeekerFindJobs({
                   Applicant Profile
                 </label>
                 <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-200 text-xs text-blue-900 space-y-1">
-                  <p className="font-bold">Kavin Raj • Electrical Diploma Holder</p>
-                  <p className="text-slate-600">kavin.raj@gmail.com | +91 98765 43210</p>
-                  <p className="text-slate-600">Resume: <span className="font-semibold text-blue-700">Kavin_Resume_2026.pdf</span> (Verified)</p>
+                  <p className="font-bold">{currentUser?.name || 'Registered Candidate'}</p>
+                  <p className="text-slate-600">{currentUser?.email || 'candidate@starkjobs.com'}</p>
                 </div>
               </div>
 
@@ -1030,7 +1060,9 @@ export default function JobSeekerFindJobs({
                 </label>
                 <textarea
                   rows={3}
-                  defaultValue="I am very interested in this role and have direct hands-on experience in the required technical skills. Looking forward to hearing from you."
+                  value={coverNote}
+                  onChange={(e) => setCoverNote(e.target.value)}
+                  placeholder="I am very interested in this role and have direct hands-on experience in the required technical skills. Looking forward to hearing from you."
                   className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
@@ -1045,9 +1077,10 @@ export default function JobSeekerFindJobs({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 text-xs font-bold text-white bg-[#1976D2] hover:bg-[#1565C0] rounded-xl shadow-xs"
+                  disabled={isApplying}
+                  className="px-5 py-2.5 text-xs font-bold text-white bg-[#1976D2] hover:bg-[#1565C0] rounded-xl shadow-xs disabled:opacity-60"
                 >
-                  Confirm & Submit
+                  {isApplying ? 'Submitting...' : 'Confirm & Submit'}
                 </button>
               </div>
             </form>

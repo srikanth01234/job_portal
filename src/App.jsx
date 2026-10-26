@@ -27,183 +27,51 @@ import JobSeekerApplications from './seeker/JobSeekerApplications';
 import JobSeekerProfile from './seeker/JobSeekerProfile';
 import JobSeekerSavedJobs from './seeker/JobSeekerSavedJobs';
 import JobSeekerSettings from './seeker/JobSeekerSettings';
+import api from './services/api';
 
 // Helper to determine the current page from URL path or hash
 const getPageFromUrl = () => {
   const path = window.location.pathname.toLowerCase();
   const hash = window.location.hash.toLowerCase();
 
-  // Job Seeker Settings routes
+  // 1. Super Admin Routes (Highest Priority to avoid substring collision with seeker)
   if (
-    path.includes('seeker/settings') ||
-    path.includes('seeker-settings') ||
-    path.includes('job-seeker/settings') ||
-    path.includes('job-seeker-settings') ||
-    hash === '#seeker-settings' ||
-    hash === '#seeker/settings'
+    path === '/admin/job-seekers' ||
+    path.startsWith('/admin/job-seekers') ||
+    path.includes('admin/job-seekers') ||
+    hash === '#admin-job-seekers' ||
+    hash === '#admin/job-seekers' ||
+    hash === '#job-seekers'
   ) {
-    return 'seeker-settings';
-  }
-
-  // Job Seeker Saved Jobs routes
-  if (
-    path.includes('seeker/saved-jobs') ||
-    path.includes('seeker-saved-jobs') ||
-    path.includes('job-seeker/saved-jobs') ||
-    path.includes('saved-jobs') ||
-    path.includes('seeker/saved') ||
-    hash === '#seeker-saved-jobs' ||
-    hash === '#saved-jobs' ||
-    hash === '#seeker/saved-jobs'
-  ) {
-    return 'seeker-saved-jobs';
-  }
-
-  // Job Seeker Profile & Resume routes
-  if (
-    path.includes('seeker/profile') ||
-    path.includes('seeker-profile') ||
-    path.includes('job-seeker/profile') ||
-    path.includes('my-profile') ||
-    path.includes('seeker/resume') ||
-    hash === '#seeker-profile' ||
-    hash === '#seeker/profile'
-  ) {
-    return 'seeker-profile';
-  }
-
-  // Job Seeker Applications routes
-  if (
-    path.includes('seeker/applications') ||
-    path.includes('seeker-applications') ||
-    path.includes('job-seeker/applications') ||
-    path.includes('my-applications') ||
-    hash === '#seeker-applications' ||
-    hash === '#applications' ||
-    hash === '#my-applications' ||
-    hash === '#seeker/applications'
-  ) {
-    return 'seeker-applications';
-  }
-
-  // Job Seeker Find Jobs routes
-  if (
-    path.includes('seeker/find-jobs') ||
-    path.includes('seeker-jobs') ||
-    path.includes('job-seeker/find-jobs') ||
-    path.includes('seeker/jobs') ||
-    path === '/find-jobs' ||
-    hash === '#seeker-jobs' ||
-    hash === '#find-jobs' ||
-    hash === '#seeker/find-jobs'
-  ) {
-    return 'seeker-jobs';
-  }
-
-  // Job Seeker Dashboard routes
-  if (
-    path.includes('seeker/dashboard') ||
-    path.includes('seeker-dashboard') ||
-    path.includes('job-seeker') ||
-    path.includes('job-seeker-dashboard') ||
-    path === '/seeker' ||
-    path.startsWith('/seeker/') ||
-    hash === '#seeker' ||
-    hash === '#job-seeker' ||
-    hash === '#seeker-dashboard'
-  ) {
-    return 'seeker-dashboard';
-  }
-
-  // Employer / Company Account Settings route
-  if (
-    path.includes('company/settings') ||
-    path.includes('company-settings') ||
-    path.includes('company/account-settings') ||
-    path.includes('company-account-settings') ||
-    path.includes('employer/settings') ||
-    path.includes('employer-settings') ||
-    hash === '#company-settings' ||
-    hash === '#settings' ||
-    hash === '#account-settings' ||
-    hash === '#company/settings'
-  ) {
-    return 'company-settings';
-  }
-
-  // Employer / Company Interviews route
-  if (
-    path.includes('company/interviews') ||
-    path.includes('company-interviews') ||
-    path.includes('employer/interviews') ||
-    path.includes('employer-interviews') ||
-    hash === '#company-interviews' ||
-    hash === '#interviews' ||
-    hash === '#company/interviews'
-  ) {
-    return 'company-interviews';
-  }
-
-  // Employer / Company Applicants route
-  if (
-    path.includes('company/applicants') ||
-    path.includes('company-applicants') ||
-    path.includes('employer/applicants') ||
-    path.includes('employer-applicants') ||
-    hash === '#company-applicants' ||
-    hash === '#applicants' ||
-    hash === '#company/applicants'
-  ) {
-    return 'company-applicants';
-  }
-
-  // Employer / Company My Jobs route
-  if (
-    path.includes('company/jobs') ||
-    path.includes('company/my-jobs') ||
-    path.includes('company-jobs') ||
-    path.includes('employer/jobs') ||
-    path.includes('employer/my-jobs') ||
-    path.includes('employer-jobs') ||
-    hash === '#company-jobs' ||
-    hash === '#my-jobs' ||
-    hash === '#company/jobs'
-  ) {
-    return 'company-jobs';
-  }
-
-  // Company Profile route
-  if (
-    path.includes('company/profile') ||
-    path.includes('company-profile') ||
-    path.includes('employer/profile') ||
-    path.includes('employer-profile') ||
-    hash === '#company-profile' ||
-    hash === '#profile' ||
-    hash === '#company/profile'
-  ) {
-    return 'company-profile';
-  }
-
-  // Employer / Company Dashboard routes
-  if (
-    path.includes('company-dashboard') ||
-    path.includes('company/dashboard') ||
-    path.includes('employer-dashboard') ||
-    path.includes('employer/dashboard') ||
-    path === '/company' ||
-    path.startsWith('/company/') ||
-    path === '/employer' ||
-    path.startsWith('/employer/') ||
-    hash === '#company' ||
-    hash === '#company-dashboard' ||
-    hash === '#employer' ||
-    hash === '#employer-dashboard'
-  ) {
-    return 'company-dashboard';
+    return 'admin-job-seekers';
   }
 
   if (
+    path === '/admin/companies' ||
+    path.startsWith('/admin/companies') ||
+    path.includes('admin/companies') ||
+    hash === '#admin-companies' ||
+    hash === '#admin/companies' ||
+    hash === '#companies'
+  ) {
+    return 'admin-companies';
+  }
+
+  if (
+    path === '/admin/job-listings' ||
+    path.startsWith('/admin/job-listings') ||
+    path.includes('admin/job-listings') ||
+    path === '/admin/jobs' ||
+    hash === '#admin-jobs' ||
+    hash === '#admin/job-listings' ||
+    hash === '#job-listings'
+  ) {
+    return 'admin-jobs';
+  }
+
+  if (
+    path === '/admin/districts-categories' ||
+    path.startsWith('/admin/districts') ||
     path.includes('districts') ||
     path.includes('districts-categories') ||
     hash === '#districts' ||
@@ -213,46 +81,159 @@ const getPageFromUrl = () => {
   }
 
   if (
-    path.includes('job-listings') ||
-    path.includes('/jobs') ||
-    hash === '#jobs' ||
-    hash === '#job-listings'
-  ) {
-    return 'admin-jobs';
-  }
-
-  if (
-    path.includes('companies') ||
-    hash === '#companies'
-  ) {
-    return 'admin-companies';
-  }
-
-  if (
-    path.includes('job-seekers') ||
-    hash === '#job-seekers' ||
-    hash === '#seekers'
-  ) {
-    return 'admin-job-seekers';
-  }
-
-  if (
+    path === '/admin-dashboard' ||
+    path === '/admin/dashboard' ||
     path.includes('admin-dashboard') ||
-    path.includes('dashboard') ||
+    path.includes('admin/dashboard') ||
     hash === '#admin-dashboard' ||
+    hash === '#admin/dashboard' ||
     hash === '#dashboard'
   ) {
     return 'admin-dashboard';
   }
 
   if (
-    path.includes('super-admin') ||
     path === '/admin' ||
-    path.startsWith('/admin/') ||
+    path.startsWith('/admin') ||
+    path.includes('super-admin') ||
     hash === '#admin' ||
     hash === '#super-admin'
   ) {
+    const storedUser = api.getStoredUser?.();
+    if (storedUser && storedUser.role === 'admin') {
+      return 'admin-dashboard';
+    }
     return 'admin';
+  }
+
+  // 2. Employer / Company Routes
+  if (
+    path.includes('company/settings') ||
+    path.includes('company-settings') ||
+    path.includes('company/account-settings') ||
+    path.includes('company-account-settings') ||
+    path.includes('employer/settings') ||
+    hash === '#company-settings' ||
+    hash === '#company/settings'
+  ) {
+    return 'company-settings';
+  }
+
+  if (
+    path.includes('company/interviews') ||
+    path.includes('company-interviews') ||
+    path.includes('employer/interviews') ||
+    hash === '#company-interviews' ||
+    hash === '#company/interviews'
+  ) {
+    return 'company-interviews';
+  }
+
+  if (
+    path.includes('company/applicants') ||
+    path.includes('company-applicants') ||
+    path.includes('employer/applicants') ||
+    hash === '#company-applicants' ||
+    hash === '#company/applicants'
+  ) {
+    return 'company-applicants';
+  }
+
+  if (
+    path.includes('company/jobs') ||
+    path.includes('company/my-jobs') ||
+    path.includes('company-jobs') ||
+    path.includes('employer/jobs') ||
+    hash === '#company-jobs' ||
+    hash === '#my-jobs' ||
+    hash === '#company/jobs'
+  ) {
+    return 'company-jobs';
+  }
+
+  if (
+    path.includes('company/profile') ||
+    path.includes('company-profile') ||
+    path.includes('employer/profile') ||
+    hash === '#company-profile' ||
+    hash === '#company/profile'
+  ) {
+    return 'company-profile';
+  }
+
+  if (
+    path.includes('company-dashboard') ||
+    path.includes('company/dashboard') ||
+    path === '/company' ||
+    path.startsWith('/company/') ||
+    path === '/employer' ||
+    hash === '#company' ||
+    hash === '#company-dashboard'
+  ) {
+    return 'company-dashboard';
+  }
+
+  // 3. Job Seeker Routes (Strictly for candidates)
+  if (
+    path.includes('seeker/settings') ||
+    path.includes('seeker-settings') ||
+    hash === '#seeker-settings' ||
+    hash === '#seeker/settings'
+  ) {
+    return 'seeker-settings';
+  }
+
+  if (
+    path.includes('seeker/saved-jobs') ||
+    path.includes('seeker-saved-jobs') ||
+    path === '/saved-jobs' ||
+    hash === '#seeker-saved-jobs' ||
+    hash === '#saved-jobs' ||
+    hash === '#seeker/saved-jobs'
+  ) {
+    return 'seeker-saved-jobs';
+  }
+
+  if (
+    path.includes('seeker/profile') ||
+    path.includes('seeker-profile') ||
+    path === '/my-profile' ||
+    hash === '#seeker-profile' ||
+    hash === '#seeker/profile'
+  ) {
+    return 'seeker-profile';
+  }
+
+  if (
+    path.includes('seeker/applications') ||
+    path.includes('seeker-applications') ||
+    path === '/my-applications' ||
+    hash === '#seeker-applications' ||
+    hash === '#seeker/applications'
+  ) {
+    return 'seeker-applications';
+  }
+
+  if (
+    path.includes('seeker/find-jobs') ||
+    path.includes('seeker-jobs') ||
+    path === '/find-jobs' ||
+    hash === '#seeker-jobs' ||
+    hash === '#find-jobs' ||
+    hash === '#seeker/find-jobs'
+  ) {
+    return 'seeker-jobs';
+  }
+
+  if (
+    path.includes('seeker/dashboard') ||
+    path.includes('seeker-dashboard') ||
+    path === '/seeker' ||
+    path.startsWith('/seeker/') ||
+    hash === '#seeker' ||
+    hash === '#seeker-dashboard'
+  ) {
+    return 'seeker-dashboard';
   }
 
   return 'home';

@@ -29,10 +29,14 @@ export const setStoredUser = (user) => {
 // Generic fetch wrapper with auth header and error handling
 async function request(endpoint, options = {}) {
   const token = getToken();
+  const storedUser = getStoredUser();
+  const isFormData = options.body instanceof FormData;
   const headers = {
     'Accept': 'application/json',
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...(storedUser?.id ? { 'X-User-Id': String(storedUser.id) } : {}),
+    ...(storedUser?.email ? { 'X-User-Email': String(storedUser.email) } : {}),
     ...(options.headers || {}),
   };
 
@@ -55,10 +59,10 @@ async function request(endpoint, options = {}) {
 
 export const api = {
   // Authentication
-  login: async (email, password) => {
+  login: async (identifier, password) => {
     const data = await request('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ login: identifier, email: identifier, password }),
     });
     if (data.token) {
       setToken(data.token);
@@ -101,10 +105,17 @@ export const api = {
 
   getJobById: (id) => request(`/jobs/${id}`),
 
-  createJob: (jobData) => request('/jobs', {
-    method: 'POST',
-    body: JSON.stringify(jobData),
-  }),
+  createJob: (jobData) => {
+    const user = getStoredUser();
+    const companyId = user?.company?.id || user?.company_id;
+    return request('/jobs', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...jobData,
+        ...(companyId ? { company_id: companyId } : {}),
+      }),
+    });
+  },
 
   updateJob: (id, jobData) => request(`/jobs/${id}`, {
     method: 'PUT',
@@ -121,11 +132,31 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(data),
   }),
-  getCompanyJobs: () => request('/company/jobs'),
+  uploadCompanyLogo: (file) => {
+    const formData = new FormData();
+    formData.append('logo', file);
+    return request('/company/logo', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+  getCompanyJobs: (params = {}) => {
+    const user = getStoredUser();
+    const companyId = user?.company?.id || user?.company_id;
+    const query = new URLSearchParams({
+      ...params,
+      ...(companyId ? { company_id: companyId } : {}),
+    }).toString();
+    return request(`/company/jobs${query ? `?${query}` : ''}`);
+  },
   getCompanyInterviews: () => request('/company/interviews'),
   scheduleInterview: (interviewData) => request('/company/interviews', {
     method: 'POST',
     body: JSON.stringify(interviewData),
+  }),
+  updateInterviewStatus: (id, status) => request(`/company/interviews/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ status }),
   }),
 
   // Applications
@@ -153,6 +184,27 @@ export const api = {
   updateSeekerProfile: (data) => request('/seeker/profile', {
     method: 'POST',
     body: JSON.stringify(data),
+  }),
+  uploadAvatar: (file) => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    return request('/seeker/avatar', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+  uploadResume: (file, autoApply = false) => {
+    const formData = new FormData();
+    formData.append('resume', file);
+    if (autoApply) formData.append('auto_apply', '1');
+    return request('/seeker/resume', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+  extractResume: (autoApply = true) => request('/seeker/extract-resume', {
+    method: 'POST',
+    body: JSON.stringify({ auto_apply: autoApply }),
   }),
   getSavedJobs: () => request('/seeker/saved-jobs'),
   toggleSaveJob: (jobId) => request(`/seeker/saved-jobs/${jobId}`, {

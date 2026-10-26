@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   MapPin,
@@ -29,6 +29,77 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import JobSeekerSidebar from './JobSeekerSidebar';
+import api from '../services/api';
+
+const mapBackendSeekerApp = (app) => {
+  const job = app.jobListing || app.job_listing || {};
+  const company = job.company || {};
+  const district = job.district || {};
+
+  const statusMap = {
+    'applied': 'Under Review',
+    'under_review': 'Under Review',
+    'shortlisted': 'Shortlisted',
+    'interview': 'Interview',
+    'rejected': 'Rejected',
+    'withdrawn': 'Withdrawn',
+    'hired': 'Offer'
+  };
+
+  const stepMap = {
+    'applied': 1,
+    'under_review': 2,
+    'shortlisted': 3,
+    'interview': 4,
+    'hired': 5,
+    'rejected': 2,
+    'withdrawn': 1
+  };
+
+  const companyName = company.company_name || 'Employer';
+  const logoText = (companyName || 'CO').substring(0, 2).toUpperCase();
+
+  const appliedDate = app.created_at
+    ? new Date(app.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : 'Recently';
+
+  let responsibilities = [];
+  if (Array.isArray(job.responsibilities)) {
+    responsibilities = job.responsibilities;
+  } else if (job.requirements) {
+    responsibilities = [job.requirements];
+  } else {
+    responsibilities = ['Perform assigned duties adhering to factory and engineering safety rules.'];
+  }
+
+  const salaryFormatted = job.salary_min
+    ? `₹ ${Number(job.salary_min).toLocaleString('en-IN')} – ${Number(job.salary_max).toLocaleString('en-IN')}`
+    : '₹ 18,000 – 25,000';
+
+  return {
+    id: app.id,
+    jobId: app.job_listing_id,
+    title: job.job_title || 'Applied Position',
+    company: companyName,
+    industry: company.industry || 'Industrial Services',
+    location: district.name ? `${district.name}, TN` : (job.location || 'Tamil Nadu'),
+    fullLocation: `${job.location || ''}${job.location && district.name ? ', ' : ''}${district.name || 'Tamil Nadu'}`,
+    type: job.job_type || 'Full-time',
+    salary: salaryFormatted,
+    salaryMonthly: `${salaryFormatted}/month`,
+    appliedDate: appliedDate,
+    status: statusMap[app.status] || 'Under Review',
+    currentStep: stepMap[app.status] || 2,
+    logoText: logoText,
+    logoBg: 'bg-[#0A192F]',
+    logoColor: 'text-white',
+    resumeName: 'my_resume.pdf',
+    coverLetter: app.cover_note ? 'Submitted' : 'Not submitted',
+    notes: app.status === 'withdrawn' ? 'Application withdrawn' : (app.status === 'interview' ? 'Interview scheduled' : '-'),
+    description: job.description || 'Job application submitted successfully.',
+    responsibilities: responsibilities
+  };
+};
 
 export default function JobSeekerApplications({
   onLogout,
@@ -62,210 +133,41 @@ export default function JobSeekerApplications({
     setTimeout(() => setToastMessage(''), 3500);
   };
 
-  // Full dataset matching the screenshot
-  const [applications, setApplications] = useState([
-    {
-      id: 'app-1',
-      jobId: 'job-1',
-      title: 'Electrical Maintenance Technician',
-      company: 'South Coast Industries',
-      industry: 'Industrial Manufacturing',
-      location: 'Thoothukudi, TN',
-      fullLocation: 'Thoothukudi, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 18,000 – 25,000',
-      salaryMonthly: '₹ 18,000 – 25,000/month',
-      appliedDate: 'Oct 14, 2026',
-      status: 'Under Review',
-      currentStep: 2, // 1: Applied, 2: Under Review, 3: Shortlisted, 4: Interview, 5: Offer
-      logoText: 'SCI',
-      logoBg: 'bg-[#0A192F]',
-      logoColor: 'text-white',
-      resumeName: 'kavin_resume.pdf',
-      coverLetter: 'Not submitted',
-      notes: '-',
-      description:
-        'We are looking for an Electrical Maintenance Technician to handle routine maintenance, troubleshooting and repair of electrical systems and equipment in our production facility.',
-      responsibilities: [
-        'Perform preventive and corrective maintenance',
-        'Troubleshoot electrical faults in machines and panels',
-        'Ensure safety and compliance standards',
-        'Work with the maintenance team'
-      ]
-    },
-    {
-      id: 'app-2',
-      jobId: 'job-2',
-      title: 'Junior Flutter Developer',
-      company: 'BlueKite Software',
-      industry: 'Software & Technology',
-      location: 'Tirunelveli, TN',
-      fullLocation: 'Tirunelveli, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 15,000 – 22,000',
-      salaryMonthly: '₹ 15,000 – 22,000/month',
-      appliedDate: 'Oct 10, 2026',
-      status: 'Shortlisted',
-      currentStep: 3,
-      logoText: 'BK',
-      logoBg: 'bg-[#0080FF]',
-      logoColor: 'text-white',
-      resumeName: 'kavin_resume.pdf',
-      coverLetter: 'Attached in portal profile',
-      notes: 'Shortlisted for online technical screening',
-      description:
-        'Cross-platform mobile application development using Flutter & Dart for client-facing logistics systems.',
-      responsibilities: [
-        'Build responsive Flutter apps',
-        'Integrate Firebase and REST backend endpoints',
-        'Write unit tests and optimize memory performance'
-      ]
-    },
-    {
-      id: 'app-3',
-      jobId: 'job-3',
-      title: 'Mathematics Teacher',
-      company: 'Bright Future Academy',
-      industry: 'Education & Academics',
-      location: 'Thoothukudi, TN',
-      fullLocation: 'Thoothukudi, Tamil Nadu',
-      type: 'Full-time',
-      salary: 'Salary not disclosed',
-      salaryMonthly: 'Competitive / Based on experience',
-      appliedDate: 'Oct 05, 2026',
-      status: 'Interview Scheduled',
-      currentStep: 4,
-      logoIcon: 'book',
-      logoBg: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-      resumeName: 'kavin_resume.pdf',
-      coverLetter: 'Submitted',
-      notes: 'Round 1 interview scheduled on Oct 18, 10:30 AM via Google Meet',
-      description:
-        'High school mathematics teacher to teach CBSE curriculum and train students for Olympiads.',
-      responsibilities: [
-        'Deliver interactive math lectures',
-        'Assess homework, tests, and student project work'
-      ]
-    },
-    {
-      id: 'app-4',
-      jobId: 'job-4',
-      title: 'Sales Executive',
-      company: 'Vetri Agencies',
-      industry: 'Wholesale & Distribution',
-      location: 'Thoothukudi, TN',
-      fullLocation: 'Thoothukudi, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 12,000 – 18,000',
-      salaryMonthly: '₹ 12,000 – 18,000/month',
-      appliedDate: 'Sep 28, 2026',
-      status: 'Rejected',
-      currentStep: 2,
-      logoType: 'swirl',
-      logoBg: 'bg-rose-50 text-rose-500 border border-rose-200',
-      resumeName: 'kavin_resume.pdf',
-      coverLetter: 'Not submitted',
-      notes: 'Profile did not match immediate territory sales requirements',
-      description: 'Field sales executive for retail merchant onboarding across Thoothukudi.',
-      responsibilities: ['Merchant visits', 'Order collection', 'Payment followups']
-    },
-    {
-      id: 'app-5',
-      jobId: 'job-5',
-      title: 'Account Assistant',
-      company: 'Harini Traders',
-      industry: 'Accounting & Commerce',
-      location: 'Tirunelveli, TN',
-      fullLocation: 'Tirunelveli, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 14,000 – 20,000',
-      salaryMonthly: '₹ 14,000 – 20,000/month',
-      appliedDate: 'Sep 20, 2026',
-      status: 'Withdrawn',
-      currentStep: 1,
-      logoText: 'HT',
-      logoBg: 'bg-[#7C3AED]',
-      logoColor: 'text-white',
-      resumeName: 'kavin_resume.pdf',
-      coverLetter: 'Not submitted',
-      notes: 'Application withdrawn by applicant on Sep 22, 2026',
-      description: 'Entry-level accounting and billing assistant using Tally Prime.',
-      responsibilities: ['Billing entries', 'Ledger balancing', 'Voucher filing']
-    },
-    {
-      id: 'app-6',
-      jobId: 'job-6',
-      title: 'HR Assistant',
-      company: 'SK Industries',
-      industry: 'Industrial Manufacturing',
-      location: 'Thoothukudi, TN',
-      fullLocation: 'Thoothukudi, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 16,000 – 24,000',
-      salaryMonthly: '₹ 16,000 – 24,000/month',
-      appliedDate: 'Sep 15, 2026',
-      status: 'Shortlisted',
-      currentStep: 3,
-      logoText: 'SK',
-      logoBg: 'bg-[#0D9488]',
-      logoColor: 'text-white',
-      resumeName: 'kavin_resume.pdf',
-      coverLetter: 'Submitted',
-      notes: 'HR panel screening completed; awaiting manager interview schedule',
-      description: 'Human resources associate supporting worker onboarding and factory shifts.',
-      responsibilities: ['Attendance monitoring', 'Worker record filing', 'Interview setup']
-    },
-    {
-      id: 'app-7',
-      jobId: 'job-7',
-      title: 'CNC Machine Operator',
-      company: 'Apex Precision Tools',
-      industry: 'Machining & Tooling',
-      location: 'Thoothukudi, TN',
-      fullLocation: 'Thoothukudi, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 17,000 – 23,000',
-      salaryMonthly: '₹ 17,000 – 23,000/month',
-      appliedDate: 'Aug 30, 2026',
-      status: 'Under Review',
-      currentStep: 2,
-      logoText: 'APT',
-      logoBg: 'bg-[#1E293B]',
-      logoColor: 'text-white',
-      resumeName: 'kavin_resume.pdf',
-      coverLetter: 'Not submitted',
-      notes: '-',
-      description: 'Precision CNC lathe and milling operator for automotive components.',
-      responsibilities: ['CNC setup', 'Quality dimensional checks', 'Machine upkeep']
-    },
-    {
-      id: 'app-8',
-      jobId: 'job-8',
-      title: 'Warehouse Supervisor',
-      company: 'Vanguard Logistics',
-      industry: 'Logistics & Warehousing',
-      location: 'Madurai, TN',
-      fullLocation: 'Madurai, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹ 19,000 – 26,000',
-      salaryMonthly: '₹ 19,000 – 26,000/month',
-      appliedDate: 'Aug 14, 2026',
-      status: 'Under Review',
-      currentStep: 2,
-      logoText: 'VL',
-      logoBg: 'bg-[#2563EB]',
-      logoColor: 'text-white',
-      resumeName: 'kavin_resume.pdf',
-      coverLetter: 'Submitted',
-      notes: '-',
-      description: 'Shift supervisor for inventory receiving and dispatch logistics.',
-      responsibilities: ['Inventory dispatch', 'Team scheduling', 'Safety audits']
-    }
-  ]);
+  // Live applications from API
+  const [applications, setApplications] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedAppId, setSelectedAppId] = useState(null);
 
-  // Selected Application for Preview (defaults to app-1)
-  const [selectedAppId, setSelectedAppId] = useState('app-1');
-  const activeApp = applications.find((a) => a.id === selectedAppId) || applications[0];
+  useEffect(() => {
+    let isMounted = true;
+    const fetchApplications = async () => {
+      try {
+        setIsLoading(true);
+        const res = await api.getApplications();
+        const list = res.data || res.applications || [];
+        if (isMounted) {
+          const mapped = list.map(mapBackendSeekerApp);
+          setApplications(mapped);
+          if (mapped.length > 0) {
+            setSelectedAppId(mapped[0].id);
+          } else {
+            setSelectedAppId(null);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load seeker applications:', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+    fetchApplications();
+    return () => { isMounted = false; };
+  }, []);
+
+  const activeApp = useMemo(() => {
+    if (!applications || applications.length === 0) return null;
+    return applications.find((a) => a.id === selectedAppId) || applications[0];
+  }, [applications, selectedAppId]);
 
   // Counts for Ribbon
   const counts = useMemo(() => {
@@ -280,21 +182,36 @@ export default function JobSeekerApplications({
   }, [applications]);
 
   // Handle Withdraw Application
-  const handleConfirmWithdraw = () => {
-    setApplications((prev) =>
-      prev.map((app) =>
-        app.id === activeApp.id
-          ? {
-              ...app,
-              status: 'Withdrawn',
-              currentStep: 1,
-              notes: `Application withdrawn by candidate on ${new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}`
-            }
-          : app
-      )
-    );
-    setWithdrawModalOpen(false);
-    showToast(`Withdrew application for ${activeApp.title} at ${activeApp.company}`);
+  const handleConfirmWithdraw = async () => {
+    if (!activeApp) return;
+    try {
+      await api.withdrawApplication(activeApp.id);
+      setApplications((prev) =>
+        prev.map((app) =>
+          app.id === activeApp.id
+            ? {
+                ...app,
+                status: 'Withdrawn',
+                currentStep: 1,
+                notes: `Application withdrawn by candidate on ${new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}`
+              }
+            : app
+        )
+      );
+      setWithdrawModalOpen(false);
+      showToast(`Withdrew application for ${activeApp.title} at ${activeApp.company}`);
+    } catch (err) {
+      console.error('Failed to withdraw application:', err);
+      setApplications((prev) =>
+        prev.map((app) =>
+          app.id === activeApp.id
+            ? { ...app, status: 'Withdrawn', currentStep: 1, notes: 'Application withdrawn' }
+            : app
+        )
+      );
+      setWithdrawModalOpen(false);
+      showToast(`Withdrew application for ${activeApp.title}`);
+    }
   };
 
   // Reset Filters
@@ -898,6 +815,9 @@ export default function JobSeekerApplications({
 
             {/* Right Column: Application Details & Timeline Stepper (5 Cols) */}
             <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 shadow-xs p-6 space-y-6 sticky top-20">
+              {activeApp ? (
+                <>
+
               {/* Header with Company Logo & Status Pill */}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3.5">
@@ -1075,36 +995,46 @@ export default function JobSeekerApplications({
                 </div>
               </div>
 
-              {/* Bottom Buttons matching Screenshot */}
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setViewDetailsModal(true)}
-                  className="flex-1 py-3 px-4 rounded-xl border border-blue-600 text-blue-600 hover:bg-blue-50 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
-                >
-                  <FileText className="w-4 h-4" />
-                  <span>View Job Details</span>
-                </button>
+                {/* Bottom Buttons matching Screenshot */}
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setViewDetailsModal(true)}
+                    className="flex-1 py-3 px-4 rounded-xl border border-blue-600 text-blue-600 hover:bg-blue-50 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>View Job Details</span>
+                  </button>
 
-                {activeApp.status !== 'Withdrawn' && activeApp.status !== 'Rejected' ? (
-                  <button
-                    type="button"
-                    onClick={() => setWithdrawModalOpen(true)}
-                    className="flex-1 py-3 px-4 rounded-xl border border-red-500 text-red-600 hover:bg-red-50 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
-                  >
-                    <X className="w-4 h-4 stroke-[2.5]" />
-                    <span>Withdraw Application</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    disabled
-                    className="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-slate-400 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 bg-slate-50 cursor-not-allowed"
-                  >
-                    <span>{activeApp.status === 'Withdrawn' ? 'Withdrawn' : 'Closed'}</span>
-                  </button>
-                )}
+                  {activeApp.status !== 'Withdrawn' && activeApp.status !== 'Rejected' ? (
+                    <button
+                      type="button"
+                      onClick={() => setWithdrawModalOpen(true)}
+                      className="flex-1 py-3 px-4 rounded-xl border border-red-500 text-red-600 hover:bg-red-50 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <X className="w-4 h-4 stroke-[2.5]" />
+                      <span>Withdraw Application</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      className="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-slate-400 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 bg-slate-50 cursor-not-allowed"
+                    >
+                      <span>{activeApp.status === 'Withdrawn' ? 'Withdrawn' : 'Closed'}</span>
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="py-16 text-center text-slate-400">
+                <FileText className="w-12 h-12 mx-auto mb-3 opacity-30 text-[#1976D2]" />
+                <h4 className="font-bold text-slate-700 text-sm">No Application Selected</h4>
+                <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+                  Select an application from the list on the left to track its interview schedule and review details.
+                </p>
               </div>
+            )}
             </div>
           </div>
         </main>

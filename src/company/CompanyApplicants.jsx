@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Users,
   FileText,
@@ -29,208 +29,81 @@ import {
   ExternalLink
 } from 'lucide-react';
 import CompanySidebar from './CompanySidebar';
+import api from '../services/api';
 
-// Complete dataset matching the reference screenshot exactly
-const INITIAL_APPLICANTS_DATA = [
-  {
-    id: 'app-1',
-    name: 'Ravi Kumar',
-    email: 'ravi.kumar@gmail.com',
-    phone: '+91 98765 43210',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=faces',
-    avatarInitials: 'RK',
-    avatarBg: 'bg-blue-100 text-blue-700',
-    appliedFor: 'Electrician',
-    jobType: 'Full-time',
-    location: 'Thoothukudi, TN',
-    fullLocation: 'Thoothukudi, Tamil Nadu',
-    appliedOn: 'Oct 14, 2026',
-    status: 'New',
-    experience: '2 years',
-    expectedSalary: '₹18,000 - 22,000',
-    joinDate: 'Available',
-    about: 'Skilled electrician with 2 years of hands-on experience in industrial and commercial electrical installation, maintenance and troubleshooting.',
-    skills: ['Electrical Installation', 'Wiring', 'Troubleshooting', 'Maintenance', 'Safety Compliance'],
-    preferredLocation: 'Thoothukudi, Tamil Nadu',
-    willingToRelocate: 'No',
-    resumeUrl: 'ravi_kumar_resume.pdf'
-  },
-  {
-    id: 'app-2',
-    name: 'Muthu Selvam',
-    email: 'muthu.selvam@gmail.com',
-    phone: '+91 98451 23456',
-    avatar: null,
-    avatarInitials: 'MS',
-    avatarBg: 'bg-emerald-100 text-emerald-700',
-    appliedFor: 'Maintenance Technician',
-    jobType: 'Full-time',
-    location: 'Tirunelveli, TN',
-    fullLocation: 'Tirunelveli, Tamil Nadu',
-    appliedOn: 'Oct 13, 2026',
-    status: 'Under Review',
-    experience: '3.5 years',
-    expectedSalary: '₹22,000 - 26,000',
-    joinDate: '15 Days Notice',
-    about: 'Experienced mechanical and plant maintenance technician with expertise in hydraulics, pneumatic systems, and routine industrial preventive checks.',
-    skills: ['Preventive Maintenance', 'Hydraulics', 'Pneumatics', 'Welding', 'Troubleshooting'],
-    preferredLocation: 'Tirunelveli, Tamil Nadu',
-    willingToRelocate: 'Yes',
-    resumeUrl: 'muthu_selvam_resume.pdf'
-  },
-  {
-    id: 'app-3',
-    name: 'Arun Prakash',
-    email: 'arun.prakash@gmail.com',
-    phone: '+91 97123 45678',
-    avatar: null,
-    avatarInitials: 'AP',
-    avatarBg: 'bg-purple-100 text-purple-700',
-    appliedFor: 'Fitter',
-    jobType: 'Contract',
-    location: 'Thoothukudi, TN',
-    fullLocation: 'Thoothukudi, Tamil Nadu',
-    appliedOn: 'Oct 12, 2026',
-    status: 'Shortlisted',
-    experience: '4 years',
-    expectedSalary: '₹19,000 - 23,000',
-    joinDate: 'Immediate',
-    about: 'Certified industrial fitter specialized in precision pipe assembly, machinery alignment, and structural welding for chemical and shipping facilities.',
-    skills: ['Pipe Fitting', 'Machinery Alignment', 'Blueprints', 'Lathe Machine', 'Safety Standards'],
-    preferredLocation: 'Thoothukudi, Tamil Nadu',
-    willingToRelocate: 'No',
-    resumeUrl: 'arun_prakash_resume.pdf'
-  },
-  {
-    id: 'app-4',
-    name: 'Siva Jothi',
-    email: 'siva.jothi@gmail.com',
-    phone: '+91 94321 09876',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=faces',
-    avatarInitials: 'SJ',
-    avatarBg: 'bg-rose-100 text-rose-700',
-    appliedFor: 'Machine Operator',
-    jobType: 'Full-time',
-    location: 'Madurai, TN',
-    fullLocation: 'Madurai, Tamil Nadu',
-    appliedOn: 'Oct 11, 2026',
-    status: 'Interview',
-    experience: '3 years',
-    expectedSalary: '₹17,000 - 21,000',
-    joinDate: 'Immediate',
-    about: 'Experienced automated machine operator with deep experience running high-speed CNC and packaging lines in heavy manufacturing plants.',
-    skills: ['CNC Operations', 'Packaging Machinery', 'Quality Inspection', 'Calibration', '5S Practices'],
-    preferredLocation: 'Madurai, Tamil Nadu',
-    willingToRelocate: 'Yes',
-    resumeUrl: 'siva_jothi_resume.pdf'
-  },
-  {
-    id: 'app-5',
-    name: 'Karthick Raj',
-    email: 'karthick.raj@gmail.com',
-    phone: '+91 98877 66554',
-    avatar: null,
-    avatarInitials: 'KR',
-    avatarBg: 'bg-amber-100 text-amber-700',
-    appliedFor: 'Safety Supervisor',
-    jobType: 'Full-time',
-    location: 'Chennai, TN',
-    fullLocation: 'Chennai, Tamil Nadu',
-    appliedOn: 'Oct 10, 2026',
-    status: 'New',
-    experience: '5 years',
-    expectedSalary: '₹28,000 - 34,000',
-    joinDate: '1 Month Notice',
-    about: 'Certified industrial safety supervisor holding NEBOSH certification. Expertise in hazard assessment, workplace audits, and accident prevention.',
-    skills: ['OSHA Compliance', 'Hazard Identification', 'Emergency Response', 'Safety Auditing', 'Fire Safety'],
-    preferredLocation: 'Chennai / Thoothukudi',
-    willingToRelocate: 'Yes',
-    resumeUrl: 'karthick_raj_resume.pdf'
-  },
-  {
-    id: 'app-6',
-    name: 'Divya Nair',
-    email: 'divya.nair@gmail.com',
-    phone: '+91 96543 21098',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=faces',
-    avatarInitials: 'DN',
-    avatarBg: 'bg-rose-100 text-rose-700',
-    appliedFor: 'Electrical Helper',
-    jobType: 'Part-time',
-    location: 'Thoothukudi, TN',
-    fullLocation: 'Thoothukudi, Tamil Nadu',
-    appliedOn: 'Oct 09, 2026',
-    status: 'Rejected',
-    experience: '1 year',
-    expectedSalary: '₹12,000 - 15,000',
-    joinDate: 'Immediate',
-    about: 'Diploma in electrical engineering with 1 year hands-on assistance experience in panel board wiring and electrical cable routing.',
-    skills: ['Cable Laying', 'Circuit Testing', 'Conduit Wiring', 'Power Tools', 'Workplace Safety'],
-    preferredLocation: 'Thoothukudi, Tamil Nadu',
-    willingToRelocate: 'No',
-    resumeUrl: 'divya_nair_resume.pdf'
-  },
-  {
-    id: 'app-7',
-    name: 'Suresh Kumar',
-    email: 'suresh.kumar@gmail.com',
-    phone: '+91 91234 56780',
-    avatar: null,
-    avatarInitials: 'SK',
-    avatarBg: 'bg-amber-100 text-amber-700',
-    appliedFor: 'Maintenance Technician',
-    jobType: 'Full-time',
-    location: 'Tirunelveli, TN',
-    fullLocation: 'Tirunelveli, Tamil Nadu',
-    appliedOn: 'Oct 08, 2026',
-    status: 'Shortlisted',
-    experience: '4.5 years',
-    expectedSalary: '₹24,000 - 28,000',
-    joinDate: '15 Days',
-    about: 'Reliable industrial plant technician experienced in heavy motor servicing, pump maintenance, and electrical drive overhauls.',
-    skills: ['Motor Overhaul', 'Pump Repair', 'Control Panels', 'Lubrication', 'Diagnostic Testing'],
-    preferredLocation: 'Tirunelveli, Tamil Nadu',
-    willingToRelocate: 'Yes',
-    resumeUrl: 'suresh_kumar_resume.pdf'
-  },
-  {
-    id: 'app-8',
-    name: 'Priya L',
-    email: 'priya.l@gmail.com',
-    phone: '+91 94433 22110',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=faces',
-    avatarInitials: 'PL',
-    avatarBg: 'bg-blue-100 text-blue-700',
-    appliedFor: 'HR Assistant',
-    jobType: 'Full-time',
-    location: 'Madurai, TN',
-    fullLocation: 'Madurai, Tamil Nadu',
-    appliedOn: 'Oct 07, 2026',
-    status: 'Under Review',
-    experience: '2 years',
-    expectedSalary: '₹18,000 - 22,000',
-    joinDate: 'Immediate',
-    about: 'HR operations and technician recruitment coordinator skilled in candidate onboarding, attendance registers, and labour compliance.',
-    skills: ['Recruitment', 'Attendance Management', 'Labour Laws', 'Payroll Assistance', 'Communication'],
-    preferredLocation: 'Madurai, Tamil Nadu',
-    willingToRelocate: 'No',
-    resumeUrl: 'priya_l_resume.pdf'
+const mapBackendApplicant = (app) => {
+  const user = app.user || {};
+  const profile = user.seeker_profile || {};
+  const job = app.job_listing || {};
+  
+  const statusMap = {
+    'applied': 'New',
+    'under_review': 'Under Review',
+    'shortlisted': 'Shortlisted',
+    'interview': 'Interview',
+    'rejected': 'Rejected',
+    'withdrawn': 'Withdrawn',
+    'hired': 'Hired'
+  };
+
+  const name = user.name || 'Applicant';
+  const initials = name
+    .split(' ')
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase() || 'AP';
+
+  let skills = ['General Work'];
+  if (Array.isArray(profile.skills)) {
+    skills = profile.skills;
+  } else if (typeof profile.skills === 'string') {
+    try {
+      const parsed = JSON.parse(profile.skills);
+      if (Array.isArray(parsed)) skills = parsed;
+      else skills = profile.skills.split(',').map((s) => s.trim());
+    } catch {
+      skills = profile.skills.split(',').map((s) => s.trim());
+    }
   }
-];
+
+  const expectedSalaryFormatted = profile.expected_salary
+    ? `₹${Number(profile.expected_salary).toLocaleString('en-IN')}`
+    : '₹18,000 - 25,000';
+
+  const appliedDate = app.created_at
+    ? new Date(app.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : 'Recently';
+
+  return {
+    id: app.id,
+    name: name,
+    email: user.email || 'N/A',
+    phone: user.phone || 'N/A',
+    avatar: user.avatar_url || (user.avatar ? (user.avatar.startsWith('http') ? user.avatar : `http://127.0.0.1:8000/storage/${user.avatar}`) : null),
+    avatarInitials: initials,
+    avatarBg: 'bg-blue-100 text-[#1976D2]',
+    appliedFor: job.job_title || 'Applied Position',
+    jobType: job.job_type || 'Full-time',
+    location: profile.current_location || job.location || 'Tamil Nadu',
+    fullLocation: profile.current_location || `${job.location || 'SIPCOT'}, Tamil Nadu`,
+    appliedOn: appliedDate,
+    status: statusMap[app.status] || 'New',
+    experience: profile.experience_level || '1-2 years',
+    expectedSalary: expectedSalaryFormatted,
+    joinDate: 'Immediate',
+    about: app.cover_note || profile.professional_summary || 'Candidate has submitted an application for this role.',
+    skills: skills.length ? skills : ['Communication', 'Teamwork', 'Safety Compliance'],
+    preferredLocation: profile.current_location || 'Tamil Nadu',
+    willingToRelocate: 'Yes',
+    resumeUrl: profile.resume_path ? `http://127.0.0.1:8000/storage/${profile.resume_path}` : null,
+    resumeName: profile.resume_filename || 'candidate_resume.pdf'
+  };
+};
 
 const ITEMS_PER_PAGE = 8;
 
-/**
- * Company Applicants Component (Single File Implementation)
- * Exact recreation of the reference screenshot:
- * - Top pipeline ribbon KPI cards with chevron connections (64 Total, 28 New, 16 Under Review, 10 Shortlisted, 6 Interview, 4 Rejected)
- * - Multi-filter toolbar (Select Job, Application Status, District, Search by keyword, Reset)
- * - Status Filter Tabs (All Applicants 64, New 28, Under Review 16, Shortlisted 10, Interview 6, Rejected 4)
- * - 2-Column Split Layout:
- *   - Left: Applicants Table with checkbox selection, applicant details, trade, status pill
- *   - Right: Interactive Candidate Details preview pane with Overview, Resume, Cover Letter, Application Details tabs, About, Skills, and quick action buttons (Shortlist, Schedule Interview, Reject)
- * - Bottom bulk actions toolbar (Shortlist, Schedule Interview, Reject, More) & pagination
- */
 export default function CompanyApplicants({
   onLogout,
   onNavigateHome,
@@ -239,9 +112,11 @@ export default function CompanyApplicants({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState('');
   const [notificationOpen, setNotificationOpen] = useState(false);
+  const storedUser = api.getStoredUser?.() || {};
 
-  // Filter States
-  const [applicants, setApplicants] = useState(INITIAL_APPLICANTS_DATA);
+  // Filter States & Data
+  const [applicants, setApplicants] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [statusTab, setStatusTab] = useState('all'); // 'all', 'new', 'review', 'shortlisted', 'interview', 'rejected'
   const [jobFilter, setJobFilter] = useState('All Jobs');
   const [statusDropdown, setStatusDropdown] = useState('All Status');
@@ -251,8 +126,8 @@ export default function CompanyApplicants({
   const [currentPage, setCurrentPage] = useState(1);
 
   // Selected row & preview pane state
-  const [selectedApplicantId, setSelectedApplicantId] = useState('app-1');
-  const [checkedIds, setCheckedIds] = useState(['app-1']);
+  const [selectedApplicantId, setSelectedApplicantId] = useState(null);
+  const [checkedIds, setCheckedIds] = useState([]);
   const [previewTab, setPreviewTab] = useState('overview'); // 'overview', 'resume', 'cover', 'details'
 
   // Schedule Interview modal state
@@ -260,18 +135,48 @@ export default function CompanyApplicants({
   const [interviewDate, setInterviewDate] = useState('2026-10-18T10:30');
   const [interviewMode, setInterviewMode] = useState('In-Person');
 
+  // Load applicants from API
+  useEffect(() => {
+    let isMounted = true;
+    const fetchApplicants = async () => {
+      try {
+        setIsLoading(true);
+        const res = await api.getApplications({ role: 'company' });
+        const list = res.data || res.applications || [];
+        if (isMounted) {
+          const mapped = list.map(mapBackendApplicant);
+          setApplicants(mapped);
+          if (mapped.length > 0) {
+            setSelectedApplicantId(mapped[0].id);
+            setCheckedIds([mapped[0].id]);
+          } else {
+            setSelectedApplicantId(null);
+            setCheckedIds([]);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load applications:', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+    fetchApplicants();
+    return () => { isMounted = false; };
+  }, []);
+
   // Currently inspected applicant in the right preview pane
   const activeCandidate = useMemo(() => {
+    if (!applicants || applicants.length === 0) return null;
     return applicants.find((a) => a.id === selectedApplicantId) || applicants[0];
   }, [applicants, selectedApplicantId]);
 
   // Dynamic funnel KPI counts
-  const totalCount = applicants.length * 8; // Replicating ~64 metric representation
-  const newCount = 28;
-  const underReviewCount = 16;
-  const shortlistedCount = 10;
-  const interviewCount = 6;
-  const rejectedCount = 4;
+  const totalCount = applicants.length;
+  const newCount = applicants.filter((a) => a.status === 'New').length;
+  const underReviewCount = applicants.filter((a) => a.status === 'Under Review').length;
+  const shortlistedCount = applicants.filter((a) => a.status === 'Shortlisted').length;
+  const interviewCount = applicants.filter((a) => a.status === 'Interview').length;
+  const rejectedCount = applicants.filter((a) => a.status === 'Rejected').length;
 
   // Filter logic
   const filteredApplicants = useMemo(() => {
@@ -306,6 +211,12 @@ export default function CompanyApplicants({
     });
   }, [applicants, statusTab, jobFilter, statusDropdown, districtFilter, searchQuery]);
 
+  // Unique job titles from applicants
+  const uniqueJobTitles = useMemo(() => {
+    const titles = new Set(applicants.map((a) => a.appliedFor).filter(Boolean));
+    return ['All Jobs', ...Array.from(titles)];
+  }, [applicants]);
+
   // Reset Filters
   const handleResetFilters = () => {
     setStatusTab('all');
@@ -333,17 +244,51 @@ export default function CompanyApplicants({
   };
 
   // Status changers
-  const updateCandidateStatus = (id, newStatus) => {
+  const updateCandidateStatus = async (id, newStatus) => {
+    const statusMap = {
+      'New': 'applied',
+      'Under Review': 'under_review',
+      'Shortlisted': 'shortlisted',
+      'Interview': 'interview',
+      'Rejected': 'rejected',
+      'Hired': 'hired',
+      'Withdrawn': 'withdrawn'
+    };
+    const backendStatus = statusMap[newStatus] || newStatus.toLowerCase().replace(/\s+/g, '_');
+
     setApplicants((prev) =>
       prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
     );
+
+    try {
+      await api.updateApplicationStatus(id, backendStatus);
+    } catch (err) {
+      console.error('Failed to update status on server:', err);
+    }
   };
 
-  const handleBulkStatusChange = (newStatus) => {
+  const handleBulkStatusChange = async (newStatus) => {
     if (checkedIds.length === 0) return;
+    const statusMap = {
+      'New': 'applied',
+      'Under Review': 'under_review',
+      'Shortlisted': 'shortlisted',
+      'Interview': 'interview',
+      'Rejected': 'rejected'
+    };
+    const backendStatus = statusMap[newStatus] || newStatus.toLowerCase();
+
     setApplicants((prev) =>
       prev.map((item) => (checkedIds.includes(item.id) ? { ...item, status: newStatus } : item))
     );
+
+    for (const id of checkedIds) {
+      try {
+        await api.updateApplicationStatus(id, backendStatus);
+      } catch (err) {
+        console.error('Failed to bulk update status for candidate:', id, err);
+      }
+    }
   };
 
   // Badge class helper
@@ -501,7 +446,7 @@ export default function CompanyApplicants({
                 <Users className="w-5 h-5 stroke-[2]" />
               </div>
               <div>
-                <div className="text-2xl font-black text-slate-900 leading-none">64</div>
+                <div className="text-2xl font-black text-slate-900 leading-none">{totalCount}</div>
                 <div className="text-xs font-bold text-slate-600 mt-1">Total Applicants</div>
                 <div className="text-[11px] font-semibold text-emerald-600 mt-1 flex items-center gap-0.5">
                   <span>↗ 18%</span>
@@ -611,14 +556,9 @@ export default function CompanyApplicants({
                     onChange={(e) => setJobFilter(e.target.value)}
                     className="bg-transparent font-bold text-slate-800 pr-5 focus:outline-none cursor-pointer mt-0.5"
                   >
-                    <option>All Jobs</option>
-                    <option>Electrician</option>
-                    <option>Maintenance Technician</option>
-                    <option>Machine Operator</option>
-                    <option>Fitter</option>
-                    <option>Safety Supervisor</option>
-                    <option>Electrical Helper</option>
-                    <option>HR Assistant</option>
+                    {uniqueJobTitles.map((job) => (
+                      <option key={job} value={job}>{job}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -699,7 +639,7 @@ export default function CompanyApplicants({
           {/* Row 3: Status Filter Tabs */}
           <div className="flex items-center gap-2 flex-wrap text-xs sm:text-sm">
             {[
-              { id: 'all', label: 'All Applicants', count: 64 },
+              { id: 'all', label: 'All Applicants', count: totalCount },
               { id: 'new', label: 'New', count: newCount },
               { id: 'review', label: 'Under Review', count: underReviewCount },
               { id: 'shortlisted', label: 'Shortlisted', count: shortlistedCount },
@@ -1182,7 +1122,7 @@ export default function CompanyApplicants({
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
                       <h5 className="font-bold text-slate-900">Application Note from {activeCandidate.name}</h5>
                       <p className="text-slate-600 leading-relaxed italic">
-                        "Dear Hiring Team at ABC Industrial Services, I have {activeCandidate.experience} of industrial experience in {activeCandidate.appliedFor}. I am confident in handling operations safely and adhering to company SOPs. Looking forward to the interview."
+                        "Dear Hiring Team at {storedUser.name || 'Company'}, I have {activeCandidate.experience} of industrial experience in {activeCandidate.appliedFor}. I am confident in handling operations safely and adhering to company SOPs. Looking forward to the interview."
                       </p>
                     </div>
                   )}
@@ -1289,7 +1229,7 @@ export default function CompanyApplicants({
                 </label>
                 <input
                   type="text"
-                  defaultValue="ABC Industrial Services, SIPCOT Complex, Thoothukudi"
+                  defaultValue={`${storedUser.name || 'Company Main Office'}, Thoothukudi`}
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import api from '../services/api';
 import {
   Home,
   Search,
@@ -135,27 +136,43 @@ export default function JobSeekerSidebar({
             <span>Logout</span>
           </button>
 
-          {/* User Profile Footer Strip matching screenshot */}
-          <div
-            onClick={() => {
-              if (onSelectTab) onSelectTab('profile');
-              if (onCloseMobile) onCloseMobile();
-            }}
-            className="pt-2 mt-2 border-t border-slate-800/60 flex items-center justify-between p-2 rounded-xl hover:bg-slate-800/60 transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center flex-shrink-0 ring-1 ring-slate-700">
-                KR
+          {/* User Profile Footer Strip */}
+          {(() => {
+            const storedUser = api.getStoredUser?.() || {};
+            const displayName = storedUser.name || 'Job Seeker';
+            const initials = displayName.split(' ').filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'JS';
+            const avatarUrl = storedUser.avatar_url || (storedUser.avatar ? (storedUser.avatar.startsWith('http') ? storedUser.avatar : `http://127.0.0.1:8000/storage/${storedUser.avatar}`) : null);
+            return (
+              <div
+                onClick={() => {
+                  if (onSelectTab) onSelectTab('profile');
+                  if (onCloseMobile) onCloseMobile();
+                }}
+                className="pt-2 mt-2 border-t border-slate-800/60 flex items-center justify-between p-2 rounded-xl hover:bg-slate-800/60 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={displayName}
+                      className="w-10 h-10 rounded-full object-cover ring-1 ring-slate-700 flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center flex-shrink-0 ring-1 ring-slate-700">
+                      {initials}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-white truncate group-hover:text-blue-300 transition-colors">
+                      {displayName}
+                    </h4>
+                    <p className="text-[11px] text-slate-400 truncate">Job Seeker</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white flex-shrink-0 transition-colors" />
               </div>
-              <div className="min-w-0">
-                <h4 className="text-xs font-bold text-white truncate group-hover:text-blue-300 transition-colors">
-                  Kavin Raj
-                </h4>
-                <p className="text-[11px] text-slate-400 truncate">Job Seeker</p>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white flex-shrink-0 transition-colors" />
-          </div>
+            );
+          })()}
         </div>
       </aside>
     </>
